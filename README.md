@@ -151,6 +151,13 @@ src/
     hover.ts               explanation, confidence, suggested fix
     codeActions.ts         apply fix / ignore / re-analyze
   extension.ts             wiring, commands, status bar, report
+eval/
+  labeled/                 corpus source of truth, inline # KLABEL markers
+  corpus/                  generated marker-free copies (gitignored)
+  extract-labels.mjs       markers -> labels.json, strips the markers
+  run_eval.ts              rules -> provider -> presentFindings, end to end
+  score.ts                 TP/FP/FN matching and precision/recall
+  RESULTS.md               committed output of the last run
 ```
 
 Everything under `scan/`, `lm/verdict.ts`, `lm/prompt.ts`, `lm/analyzer.ts`,
@@ -158,10 +165,69 @@ Everything under `scan/`, `lm/verdict.ts`, `lm/prompt.ts`, `lm/analyzer.ts`,
 tested without an extension host. Only the providers that need VS Code
 (`copilot.ts`, `index.ts`) and the UI layer touch the editor API.
 
+## Evaluation
+
+Rules are measured, not assumed. `eval/` contains a 50-file Python corpus with
+line-level CWE labels: 20 straightforward vulnerable files, 20 clean files, and
+10 hand-written adversarial files that probe known blind spots (multiline
+expressions, interprocedural flow, aliased imports, encoded secrets).
+
+```bash
+npm run eval      # rules only, offline
+npm run eval:ai   # rules, rules+ollama, rules+deep scan (needs Ollama)
+```
+
+The evaluator runs the production pipeline end to end — `scanPython` →
+`buildCandidates` → provider → `presentFindings` — and matches predictions to
+labels by CWE within ±2 lines. A finding the AI dismisses counts as a miss, not
+a false positive, so a model cannot inflate precision by suppressing everything.
+
+### Current results (rules only)
+
+| TP | FP | FN | Precision | Recall | F1 |
+|---|---|---|---|---|---|
+| 22 | 2 | 7 | 91.7% | 75.9% | 83.0% |
+
+| CWE | TP | FP | FN |
+|---|---|---|---|
+| CWE-89 SQL injection | 4 | 0 | 2 |
+| CWE-78 Command injection | 4 | 0 | 0 |
+| CWE-22 Path traversal | 3 | 1 | 2 |
+| CWE-502 Deserialization | 3 | 0 | 0 |
+| CWE-798 Hardcoded secret | 5 | 0 | 2 |
+| CWE-327 Weak crypto | 3 | 1 | 1 |
+
+**These numbers are in-sample.** The corpus was authored alongside the rules, so
+they describe behaviour on this corpus, not on arbitrary code. The adversarial
+files are the honest part: they are the misses and false positives that remain.
+
+Both false positives are deliberate:
+
+- `h09_clean_whitelist.py` — input is checked against an allow-list before
+  reaching `open()`. The rule tracks taint, not validation.
+- `h10_clean_md5_dedup.py` — MD5 used for content deduplication, not for
+  signatures or passwords. The rule cannot see the purpose.
+
+Known misses, all by design of the current single-file, single-line analyzer:
+
+- multiline SQL assembled across statements (`h01`)
+- taint crossing a function boundary (`h02`)
+- a secret built by concatenation (`h03`)
+- an ORM query builder (`.extra()`) instead of `execute` (`h04`)
+- a base64-encoded credential (`h06`)
+- DES imported under a different name (`h07`)
+- `Path` imported as `P` (`h08`)
+
+Full output, including per-file predictions, is committed in
+[`eval/RESULTS.md`](eval/RESULTS.md) and `eval/results/results.json`. AI modes
+are written but not measured here: Ollama is not installed on the machine that
+produced these numbers, and no API key was used. Running `npm run eval:ai` on a
+machine with Ollama produces the rules+AI and deep-scan rows.
+
 ## Tests
 
 ```bash
-npm test        # 90 tests, ~0.6s
+npm test        # 100 tests, ~0.6s
 npm run check   # typecheck + tests
 ```
 
@@ -175,13 +241,15 @@ The suite includes:
   Ollama server (model discovery, retry, parsing)
 - analyzer tests for concurrency, timeout, cancellation, and cache reuse
 - merge tests for confirm, reject, and AI-only findings
+- scoring tests for the evaluator itself: tolerance, CWE mismatch, duplicate
+  findings, and empty-denominator handling
 
 ## Known limitations
 
 - **Single-line expressions only.** A call split across lines with a dynamic
   argument is missed. A real parser is a v2 dependency.
-- **One-hop taint.** Data crossing a function boundary or a class attribute is
-  not followed.
+- **Intraprocedural taint only.** Assignments from a tainted name are followed,
+  but data crossing a function boundary or a class attribute is not.
 - **Rules are heuristics, AI is probabilistic.** A finding means "look here".
   A dismissal means "the model disagreed", not "proven safe".
 - **Python only.**
@@ -190,7 +258,7 @@ The suite includes:
 
 - **M3** — evaluation harness over a hand-labelled Python corpus: precision,
   recall, and false positives on clean repositories for rules vs rules+AI vs
-  deep scan. This is where the claims get numbers.
+  deep scan. Rules are measured; AI rows need a local model or a key.
 - **M4** — CodeBERT fine-tuned on PrimeVul, exported to ONNX, run in a worker
   thread as a local high-recall triage step in front of the LLM.
 

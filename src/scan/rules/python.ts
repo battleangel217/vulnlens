@@ -170,6 +170,10 @@ export const pathTraversalRule: CodeRule = {
           tainted.set(name, line);
         } else if (SANITIZER_RE.test(rhs)) {
           tainted.delete(name);
+        } else if ([...tainted.keys()].some((source) => new RegExp(`\\b${source}\\b`).test(rhs))) {
+          // Propagate through one intermediate variable, e.g.
+          // `path = os.path.join(BASE, name)` where `name` came from the request.
+          tainted.set(name, line);
         }
       }
 

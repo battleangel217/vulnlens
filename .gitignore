@@ -8,3 +8,4 @@ ml/data/
 *.onnx
 __pycache__/
 .venv/
+eval/corpus/

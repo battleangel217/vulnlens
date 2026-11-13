@@ -168,6 +168,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run test",
+    "eval": "node eval/extract-labels.mjs && npm run compile && node dist/eval.js",
+    "eval:ai": "node eval/extract-labels.mjs && npm run compile && node dist/eval.js --modes rules,ollama,deep",
+    "eval:labels": "node eval/extract-labels.mjs",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package"
   },

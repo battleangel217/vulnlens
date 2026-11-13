@@ -1,0 +1,400 @@
+{
+  "version": 1,
+  "tolerance": 2,
+  "files": [
+    {
+      "file": "c01_sqli_params.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c02_sqli_named.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c03_sqli_constant.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c04_cmdi_list.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c05_cmdi_literal.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c06_cmdi_check_output.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c07_path_constant.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c08_path_basename.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c09_path_realpath.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c10_yaml_safe.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c11_json_loads.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c12_torch_weights.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c13_secret_env.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c14_secret_placeholder.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c15_secret_config_key.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c16_crypto_sha256.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c17_crypto_aesgcm.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c18_hmac.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c19_secrets_token.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "c20_clean_helpers.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "h01_sqli_multiline.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 11,
+          "cwe": "CWE-89"
+        }
+      ]
+    },
+    {
+      "file": "h02_path_interprocedural.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 11,
+          "cwe": "CWE-22"
+        }
+      ]
+    },
+    {
+      "file": "h03_secret_concat.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 1,
+          "cwe": "CWE-798"
+        }
+      ]
+    },
+    {
+      "file": "h04_sqli_orm_extra.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 2,
+          "cwe": "CWE-89"
+        }
+      ]
+    },
+    {
+      "file": "h05_cmdi_helper.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-78"
+        }
+      ]
+    },
+    {
+      "file": "h06_secret_base64.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 3,
+          "cwe": "CWE-798"
+        }
+      ]
+    },
+    {
+      "file": "h07_crypto_alias.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 7,
+          "cwe": "CWE-327"
+        }
+      ]
+    },
+    {
+      "file": "h08_path_alias.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 8,
+          "cwe": "CWE-22"
+        }
+      ]
+    },
+    {
+      "file": "h09_clean_whitelist.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "h10_clean_md5_dedup.py",
+      "category": "clean",
+      "issues": []
+    },
+    {
+      "file": "v01_sqli_fstring.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 6,
+          "cwe": "CWE-89"
+        }
+      ]
+    },
+    {
+      "file": "v02_sqli_concat.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 6,
+          "cwe": "CWE-89"
+        }
+      ]
+    },
+    {
+      "file": "v03_sqli_percent.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 6,
+          "cwe": "CWE-89"
+        }
+      ]
+    },
+    {
+      "file": "v04_sqli_format.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 6,
+          "cwe": "CWE-89"
+        }
+      ]
+    },
+    {
+      "file": "v05_cmdi_ossystem.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-78"
+        }
+      ]
+    },
+    {
+      "file": "v06_cmdi_shell_true.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-78"
+        }
+      ]
+    },
+    {
+      "file": "v07_cmdi_popen.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-78"
+        }
+      ]
+    },
+    {
+      "file": "v08_path_open_request.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-22"
+        }
+      ]
+    },
+    {
+      "file": "v09_path_taint_var.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 9,
+          "cwe": "CWE-22"
+        }
+      ]
+    },
+    {
+      "file": "v10_path_dotdot.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 2,
+          "cwe": "CWE-22"
+        }
+      ]
+    },
+    {
+      "file": "v11_pickle_loads.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 8,
+          "cwe": "CWE-502"
+        }
+      ]
+    },
+    {
+      "file": "v12_yaml_load.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-502"
+        }
+      ]
+    },
+    {
+      "file": "v13_marshal_loads.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-502"
+        }
+      ]
+    },
+    {
+      "file": "v14_secret_password.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 1,
+          "cwe": "CWE-798"
+        }
+      ]
+    },
+    {
+      "file": "v15_secret_api_key.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 3,
+          "cwe": "CWE-798"
+        }
+      ]
+    },
+    {
+      "file": "v16_secret_aws.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 3,
+          "cwe": "CWE-798"
+        },
+        {
+          "line": 4,
+          "cwe": "CWE-798"
+        }
+      ]
+    },
+    {
+      "file": "v17_secret_private_key.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 1,
+          "cwe": "CWE-798"
+        }
+      ]
+    },
+    {
+      "file": "v18_crypto_md5.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-327"
+        }
+      ]
+    },
+    {
+      "file": "v19_crypto_sha1.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-327"
+        }
+      ]
+    },
+    {
+      "file": "v20_crypto_des.py",
+      "category": "vulnerable",
+      "issues": [
+        {
+          "line": 5,
+          "cwe": "CWE-327"
+        }
+      ]
+    }
+  ]
+}

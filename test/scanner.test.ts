@@ -74,6 +74,18 @@ describe('CWE-22 path traversal', () => {
     expect(cwes(findings)).toContain('CWE-22');
   });
 
+  it('propagates taint through an intermediate assignment', () => {
+    const findings = scanPython(
+      code(
+        'name = request.args["name"]',
+        'target = os.path.join("/srv/uploads", name)',
+        'with open(target) as handle:',
+        '    return handle.read()',
+      ),
+    );
+    expect(cwes(findings)).toContain('CWE-22');
+  });
+
   it('leaves constants and sanitized paths alone', () => {
     const safe = [
       'open("config.json")',
