@@ -62,7 +62,10 @@ def parse_args() -> argparse.Namespace:
         "--limit",
         type=int,
         default=0,
-        help="Keep at most N rows per split before deduplication (0 = all). Useful for smoke runs.",
+        help=(
+            "Keep at most N rows per class per split (0 = all). This keeps both "
+            "classes in a smoke run; PrimeVul lists vulnerable rows first."
+        ),
     )
     parser.add_argument(
         "--max-chars",
@@ -104,23 +107,51 @@ def coerce_cwe(value: Any) -> list[str]:
         return []
 
 
+def to_item(row: Any) -> dict[str, Any] | None:
+    code = row.get("func") or ""
+    if not isinstance(code, str) or not code.strip():
+        return None
+    return {
+        "code": code,
+        "label": coerce_label(row.get("target")),
+        "cwe": coerce_cwe(row.get("cwe")),
+        "project": row.get("project") or "",
+    }
+
+
 def rows(dataset: Any, split: str, limit: int) -> Iterator[dict[str, Any]]:
+    """Yield rows, keeping at most `limit` per class when limit > 0.
+
+    PrimeVul lists vulnerable functions first, so taking the first N rows of a
+    split produces a single-class training set. Sampling per class keeps smoke
+    runs trainable without scanning the whole corpus.
+    """
     if split not in dataset:
         return
-    stream = dataset[split]
-    if limit > 0:
-        stream = stream.select(range(min(limit, len(stream))))
 
+    stream = dataset[split]
+
+    if limit <= 0:
+        for row in stream:
+            item = to_item(row)
+            if item is not None:
+                yield item
+        return
+
+    kept = {0: 0, 1: 0}
     for row in stream:
-        code = row.get("func") or ""
-        if not isinstance(code, str) or not code.strip():
+        item = to_item(row)
+        if item is None:
             continue
-        yield {
-            "code": code,
-            "label": coerce_label(row.get("target")),
-            "cwe": coerce_cwe(row.get("cwe")),
-            "project": row.get("project") or "",
-        }
+
+        label = item["label"]
+        if kept[label] >= limit:
+            if kept[0] >= limit and kept[1] >= limit:
+                break
+            continue
+
+        kept[label] += 1
+        yield item
 
 
 def write_split(path: Path, items: Iterable[dict[str, Any]]) -> dict[str, int]:
@@ -185,7 +216,7 @@ def main() -> int:
     manifest = {
         "dataset": args.dataset,
         "config": args.config,
-        "limit_per_split": args.limit,
+        "limit_per_class": args.limit,
         "max_chars": args.max_chars,
         "dedupe": "sha256 of whitespace-normalised function body",
         "duplicates_removed": duplicates,

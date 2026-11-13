@@ -65,6 +65,10 @@ Smoke run before committing to hours of GPU time:
 !python ml/data/prepare_primevul.py --out /kaggle/working/smoke --limit 2000
 ```
 
+`--limit` keeps 2,000 rows **per class** per split, not 2,000 rows total.
+PrimeVul lists vulnerable functions first, so a plain "first 2,000 rows" sample
+would contain only one class and fail the fine-tune step.
+
 ### 2. Fine-tune
 
 ```python

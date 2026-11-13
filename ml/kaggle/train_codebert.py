@@ -335,7 +335,12 @@ def main() -> int:
     positives = int((train_labels == 1).sum())
     negatives = int((train_labels == 0).sum())
     if positives == 0 or negatives == 0:
-        print("Training split needs both classes.", file=sys.stderr)
+        print(
+            "Training split needs both classes. PrimeVul lists vulnerable rows "
+            "first, so re-run prepare_primevul.py with --limit 0 (full corpus) "
+            "or a per-class smoke limit.",
+            file=sys.stderr,
+        )
         return 1
 
     # Inverse-frequency weights: the model is a candidate generator, so a missed
