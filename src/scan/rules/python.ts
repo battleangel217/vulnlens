@@ -386,3 +386,8 @@ export const pythonRules: readonly CodeRule[] = [
   hardcodedSecretRule,
   weakCryptoRule,
 ];
+
+/** CWE id -> human title, used when the model reports a class no rule knows. */
+export const CWE_TITLES: Readonly<Record<string, string>> = Object.fromEntries(
+  pythonRules.map((rule) => [rule.cwe, rule.title]),
+);

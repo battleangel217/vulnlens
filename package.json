@@ -1,12 +1,12 @@
 {
   "name": "vuln-guard",
   "displayName": "VulnGuard",
-  "description": "Flags vulnerable Python code in the editor. Deterministic rules today, LLM verdicts and a fine-tuned local model next.",
-  "version": "0.1.0",
+  "description": "Flags vulnerable Python code in the editor. Deterministic rules plus optional AI verification through Ollama, your own API key, or GitHub Copilot.",
+  "version": "0.2.0",
   "publisher": "battleangel",
   "license": "MIT",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Linters",
@@ -17,11 +17,19 @@
     "sast",
     "vulnerability",
     "python",
-    "cwe"
+    "cwe",
+    "ai"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onLanguage:python"
+    "onLanguage:python",
+    "onCommand:vulnGuard.scanFile",
+    "onCommand:vulnGuard.analyzeFile",
+    "onCommand:vulnGuard.clearDiagnostics",
+    "onCommand:vulnGuard.setApiKey",
+    "onCommand:vulnGuard.clearApiKey",
+    "onCommand:vulnGuard.checkProvider",
+    "onCommand:vulnGuard.showReport"
   ],
   "contributes": {
     "commands": [
@@ -30,8 +38,28 @@
         "title": "VulnGuard: Scan Current File"
       },
       {
+        "command": "vulnGuard.analyzeFile",
+        "title": "VulnGuard: Analyze Current File with AI"
+      },
+      {
         "command": "vulnGuard.clearDiagnostics",
         "title": "VulnGuard: Clear Findings"
+      },
+      {
+        "command": "vulnGuard.setApiKey",
+        "title": "VulnGuard: Set API Key (BYOK)"
+      },
+      {
+        "command": "vulnGuard.clearApiKey",
+        "title": "VulnGuard: Forget API Key"
+      },
+      {
+        "command": "vulnGuard.checkProvider",
+        "title": "VulnGuard: Check AI Provider"
+      },
+      {
+        "command": "vulnGuard.showReport",
+        "title": "VulnGuard: Show Report"
       }
     ],
     "configuration": {
@@ -62,6 +90,73 @@
           ],
           "default": "low",
           "description": "Hide findings below this severity."
+        },
+        "vulnGuard.ai.mode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "ollama",
+            "byok",
+            "copilot"
+          ],
+          "default": "off",
+          "markdownDescription": "Which backend verifies rule findings. `off` keeps VulnGuard fully offline. Note: `byok`, `ollama`, and `copilot` send the analysed function to that provider."
+        },
+        "vulnGuard.ai.analyzeOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run AI verification on save for functions that triggered a rule. Requires vulnGuard.ai.mode."
+        },
+        "vulnGuard.ai.deepScan": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "When set, `VulnGuard: Analyze Current File with AI` also sends functions that no rule flagged. Costs more requests; useful for measuring what the rules miss."
+        },
+        "vulnGuard.ai.minConfidence": {
+          "type": "number",
+          "default": 0.6,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum model confidence before a rule finding is marked as a likely false positive."
+        },
+        "vulnGuard.ai.concurrency": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 4,
+          "description": "Maximum simultaneous model requests."
+        },
+        "vulnGuard.ai.timeoutMs": {
+          "type": "number",
+          "default": 25000,
+          "minimum": 2000,
+          "description": "Per-request timeout in milliseconds."
+        },
+        "vulnGuard.ai.maxChunks": {
+          "type": "number",
+          "default": 40,
+          "minimum": 1,
+          "description": "Safety cap on how many functions a single file may send."
+        },
+        "vulnGuard.ollama.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "Ollama server URL."
+        },
+        "vulnGuard.ollama.model": {
+          "type": "string",
+          "default": "qwen2.5-coder:7b",
+          "description": "Ollama model name."
+        },
+        "vulnGuard.byok.baseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "markdownDescription": "Any OpenAI-compatible base URL (OpenAI, Groq, Together, OpenRouter, LM Studio)."
+        },
+        "vulnGuard.byok.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Model name for the OpenAI-compatible endpoint."
         }
       }
     }
@@ -76,9 +171,12 @@
     "vscode:prepublish": "npm run compile",
     "package": "vsce package"
   },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "^1.90.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
