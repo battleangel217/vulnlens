@@ -1,10 +1,18 @@
 {
   "name": "vuln-lens",
   "displayName": "VulnLens",
-  "description": "Security triage for Python: deterministic rules, an optional local CodeBERT model, and AI verification through Ollama, your own API key, or GitHub Copilot.",
+  "description": "Security review for Python: deterministic CWE rules plus optional AI verification through Ollama, your own API key, or GitHub Copilot.",
   "version": "0.2.0",
   "publisher": "battleangel",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/battleangel217/vulnlens.git"
+  },
+  "homepage": "https://github.com/battleangel217/vulnlens#readme",
+  "bugs": {
+    "url": "https://github.com/battleangel217/vulnlens/issues"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -224,6 +232,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.1.1",
     "esbuild": "^0.24.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"

@@ -3,8 +3,11 @@
 Security review for Python, inside VS Code. Deterministic rules run on every
 save and flag the obvious things in milliseconds. An optional AI layer then
 confirms or rejects those findings, explains the data flow, and writes the fix.
-An optional local CodeBERT model can nominate functions the rules did not flag,
-without sending anything off the machine.
+
+A local CodeBERT triage model is also wired in, but it is **experimental and off
+by default**: trained on C/C++, it does not transfer to Python (see
+[`eval/MODEL_RESULTS.md`](eval/MODEL_RESULTS.md)). The rules and the AI verifier
+are the parts that work.
 
 The point of running rules first is cost and honesty: the model only sees
 functions that already look suspicious, and every verdict can be compared against
@@ -13,7 +16,7 @@ the rule that produced it.
 ```
 save ──▶ 6 CWE rules (offline, ~5ms) ──▶ diagnostics appear immediately
                   │
-                  └──▶ candidates ──▶ local CodeBERT triage (optional, offline)
+                  └──▶ candidates ──▶ local CodeBERT triage (experimental, off)
                                             │ nominates extra functions
                                             ▼
                                      Ollama / BYOK / Copilot
@@ -85,23 +88,27 @@ Requests are bounded: one function per call, default concurrency 2, 25s timeout,
 unchanged function is never billed twice. Cancelling a scan aborts in-flight
 requests.
 
-## Local triage model (optional)
+## Local triage model (experimental, off by default)
 
-A fine-tuned CodeBERT classifier can run locally, in worker threads, before the
-AI layer. It scores each function and promotes the ones above
+The plumbing exists: a fine-tuned CodeBERT classifier runs locally, in worker
+threads, before the AI layer. It scores each function and promotes the ones above
 `vulnLens.localModel.threshold` into the candidate list. It **cannot create a
 finding on its own**: its only output is "send this function to the verifier".
 
-Why it exists: rules have a known recall ceiling (see the misses below), and
-`ai.deepScan` is an expensive way to find those misses. A local model scores
-every function for free, so the LLM budget goes where the probability is highest.
+**It is not enabled by default, and the first model is not useful on Python.**
+Trained on PrimeVul (C/C++), it scored every chunk in the 50-file Python corpus
+between 0.005 and 0.015 and covered 7/29 labelled issues only by flagging most
+files. The full numbers are in [`eval/MODEL_RESULTS.md`](eval/MODEL_RESULTS.md).
+A model trained on Python data is the M5 roadmap item; until then, leave this
+layer off and use the rules plus the AI verifier.
 
-It is off by default and needs two things:
+If you want to experiment with your own artifact, it needs two things:
 
 1. An exported artifact (`model.onnx`, `vocab.json`, `merges.txt`) from
    [`ml/`](ml/README.md). No model is committed to this repository.
 2. `npm install onnxruntime-node` in the extension folder. The runtime is loaded
-   lazily, so rules-only installs stay small.
+   lazily, so rules-only installs stay small. This path is for source installs;
+   the packaged VSIX does not bundle the runtime.
 
 ```json
 {
@@ -112,14 +119,14 @@ It is off by default and needs two things:
 ```
 
 Run **VulnLens: Check Local Model** to verify the graph, worker count, probe
-latency, and threshold. A missing runtime, missing file, or corrupt graph
-produces an actionable warning; it never breaks activation or the rule layer.
-Inference failures are isolated per function, and a timed-out worker is replaced.
+latency, and threshold. The probe now warns when its score sits below the
+threshold, which is the expected result for a C/C++ model on Python. A missing
+runtime, missing file, or corrupt graph produces an actionable warning; it never
+breaks activation or the rule layer. Inference failures are isolated per
+function, and a timed-out worker is replaced.
 
 Training and export happen on Kaggle, not here: `ml/data/prepare_primevul.py`,
-`ml/kaggle/train_codebert.py`, and `ml/kaggle/export_onnx.py`. The corpus is
-C/C++, so Python transfer is measured separately and reported honestly — see
-[`ml/README.md`](ml/README.md) and [`eval/MODEL_RESULTS.md`](eval/MODEL_RESULTS.md).
+`ml/kaggle/train_codebert.py`, and `ml/kaggle/export_onnx.py`.
 
 ## Commands
 

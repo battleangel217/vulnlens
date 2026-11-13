@@ -6,9 +6,11 @@ ml/**
 eval/**
 src/**
 node_modules/**
-*.map
-*.ts
+**/*.map
+**/*.ts
 tsconfig.json
 esbuild.mjs
 vitest.config.*
 .gitignore
+dist/eval*.js
+*.vsix
