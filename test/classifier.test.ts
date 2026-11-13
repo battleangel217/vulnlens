@@ -13,7 +13,7 @@ import {
 } from '../src/ml/classifier';
 
 function modelDirectory(vocab: Record<string, number> = { '<s>': 0, '<pad>': 1, '</s>': 2, '<unk>': 3 }): string {
-  const directory = mkdtempSync(join(tmpdir(), 'vuln-guard-model-'));
+  const directory = mkdtempSync(join(tmpdir(), 'vuln-lens-model-'));
   writeFileSync(join(directory, 'vocab.json'), JSON.stringify(vocab));
   writeFileSync(join(directory, 'merges.txt'), '');
   writeFileSync(join(directory, 'model.onnx'), 'stub');
@@ -111,7 +111,7 @@ describe('probabilities', () => {
 
 describe('createClassifier', () => {
   it('fails with an actionable error when the model directory is incomplete', async () => {
-    await expect(createClassifier({ directory: '/nonexistent/vuln-guard' })).rejects.toMatchObject({
+    await expect(createClassifier({ directory: '/nonexistent/vuln-lens' })).rejects.toMatchObject({
       name: 'LocalModelError',
       kind: 'missing-model',
     });

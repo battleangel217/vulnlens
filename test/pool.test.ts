@@ -12,7 +12,7 @@ let pool: ClassifierPool | undefined;
 let directory: string;
 
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), 'vuln-guard-pool-'));
+  directory = mkdtempSync(join(tmpdir(), 'vuln-lens-pool-'));
   process.env.VG_POOL_TEST_LOG = join(directory, 'threads.log');
   process.env.VG_POOL_TEST_DELAY = '20';
 });

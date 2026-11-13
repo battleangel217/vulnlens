@@ -1,4 +1,4 @@
-# VulnGuard evaluation
+# VulnLens evaluation
 
 Corpus: **50 files** (28 vulnerable, 22 clean), **29 labelled issues**.
 Matching: same CWE within ±2 lines. A finding dismissed by the AI counts as a miss, not a false positive.

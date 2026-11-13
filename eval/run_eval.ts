@@ -18,7 +18,7 @@
  *   OPENAI_MODEL      default gpt-4o-mini
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 import { analyzeCandidates, type AnalysisResult } from '../src/lm/analyzer';
 import { buildCandidates } from '../src/lm/candidates';
@@ -334,7 +334,7 @@ function buildMarkdown(reports: ModeReport[], labels: Labels, options: Options):
     .filter((entry) => entry.category === 'clean').length;
 
   const lines: string[] = [];
-  lines.push('# VulnGuard evaluation', '');
+  lines.push('# VulnLens evaluation', '');
   lines.push(`Corpus: **${files} files** (${files - clean} vulnerable, ${clean} clean), **${issueCount} labelled issues**.`);
   lines.push(`Matching: same CWE within ±${options.tolerance} lines. A finding dismissed by the AI counts as a miss, not a false positive.`);
   lines.push('');
@@ -430,7 +430,10 @@ async function main(): Promise<void> {
   const markdown = buildMarkdown(reports, labels, options);
 
   mkdirSync(options.outDir, { recursive: true });
-  writeFileSync(join(options.outDir, 'results.json'), `${JSON.stringify({ options, reports }, null, 2)}\n`);
+  // Store a repo-relative path: absolute paths make the committed artifact
+  // depend on the machine that produced it.
+  const recorded = { ...options, outDir: relative(process.cwd(), options.outDir) || '.' };
+  writeFileSync(join(options.outDir, 'results.json'), `${JSON.stringify({ options: recorded, reports }, null, 2)}\n`);
   writeFileSync(join(process.cwd(), 'eval', 'RESULTS.md'), markdown);
 
   process.stdout.write(markdown);

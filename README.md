@@ -1,4 +1,4 @@
-# VulnGuard
+# VulnLens
 
 Security review for Python, inside VS Code. Deterministic rules run on every
 save and flag the obvious things in milliseconds. An optional AI layer then
@@ -51,18 +51,18 @@ curl -fsSL https://ollama.com/install.sh | sh
 ollama pull qwen2.5-coder:7b
 ```
 
-Set `vulnGuard.ai.mode` to `ollama`, then run **VulnGuard: Check AI Provider**.
+Set `vulnLens.ai.mode` to `ollama`, then run **VulnLens: Check AI Provider**.
 
 ### Option B — your own API key
 
-Run **VulnGuard: Set API Key (BYOK)**. The key goes into the OS keychain via
+Run **VulnLens: Set API Key (BYOK)**. The key goes into the OS keychain via
 `SecretStorage`, never into `settings.json`. Any OpenAI-compatible endpoint works
 (OpenAI, Groq, Together, OpenRouter, LM Studio, llama.cpp): point
-`vulnGuard.byok.baseUrl` at it and set `vulnGuard.byok.model`.
+`vulnLens.byok.baseUrl` at it and set `vulnLens.byok.model`.
 
 ### Option C — GitHub Copilot
 
-Set `vulnGuard.ai.mode` to `copilot` and run **VulnGuard: Analyze Current File
+Set `vulnLens.ai.mode` to `copilot` and run **VulnLens: Analyze Current File
 with AI** once to grant consent. Requires the official **GitHub Copilot Chat**
 extension and a Copilot subscription. This does **not** work in `code-oss`
 builds, which ship without Copilot Chat — use A or B there.
@@ -81,7 +81,7 @@ builds, which ship without Copilot Chat — use A or B there.
   findings with an `AI` badge.
 
 Requests are bounded: one function per call, default concurrency 2, 25s timeout,
-`vulnGuard.ai.maxChunks` per file (40), and a content-addressed cache so an
+`vulnLens.ai.maxChunks` per file (40), and a content-addressed cache so an
 unchanged function is never billed twice. Cancelling a scan aborts in-flight
 requests.
 
@@ -89,7 +89,7 @@ requests.
 
 A fine-tuned CodeBERT classifier can run locally, in worker threads, before the
 AI layer. It scores each function and promotes the ones above
-`vulnGuard.localModel.threshold` into the candidate list. It **cannot create a
+`vulnLens.localModel.threshold` into the candidate list. It **cannot create a
 finding on its own**: its only output is "send this function to the verifier".
 
 Why it exists: rules have a known recall ceiling (see the misses below), and
@@ -105,13 +105,13 @@ It is off by default and needs two things:
 
 ```json
 {
-  "vulnGuard.localModel.enabled": true,
-  "vulnGuard.localModel.path": "/absolute/path/to/vuln-model",
-  "vulnGuard.localModel.threshold": 0.35
+  "vulnLens.localModel.enabled": true,
+  "vulnLens.localModel.path": "/absolute/path/to/vuln-model",
+  "vulnLens.localModel.threshold": 0.35
 }
 ```
 
-Run **VulnGuard: Check Local Model** to verify the graph, worker count, probe
+Run **VulnLens: Check Local Model** to verify the graph, worker count, probe
 latency, and threshold. A missing runtime, missing file, or corrupt graph
 produces an actionable warning; it never breaks activation or the rule layer.
 Inference failures are isolated per function, and a timed-out worker is replaced.
@@ -125,37 +125,37 @@ C/C++, so Python transfer is measured separately and reported honestly — see
 
 | Command | Purpose |
 |---|---|
-| `VulnGuard: Scan Current File` | Rules only, instant |
-| `VulnGuard: Analyze Current File with AI` | Rules + verification (honours `ai.deepScan`) |
-| `VulnGuard: Check AI Provider` | Reachability, model presence, actionable fix |
-| `VulnGuard: Check Local Model` | Load the ONNX artifact and score a probe function |
-| `VulnGuard: Set API Key (BYOK)` | Store key in the OS keychain |
-| `VulnGuard: Forget API Key` | Delete it |
-| `VulnGuard: Show Report` | Per-file summary in the output panel |
-| `VulnGuard: Clear Findings` | Reset |
+| `VulnLens: Scan Current File` | Rules only, instant |
+| `VulnLens: Analyze Current File with AI` | Rules + verification (honours `ai.deepScan`) |
+| `VulnLens: Check AI Provider` | Reachability, model presence, actionable fix |
+| `VulnLens: Check Local Model` | Load the ONNX artifact and score a probe function |
+| `VulnLens: Set API Key (BYOK)` | Store key in the OS keychain |
+| `VulnLens: Forget API Key` | Delete it |
+| `VulnLens: Show Report` | Per-file summary in the output panel |
+| `VulnLens: Clear Findings` | Reset |
 
 ## Settings
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `vulnGuard.enable` | `true` | Master switch |
-| `vulnGuard.scanOnSave` / `scanOnOpen` | `true` | When the rules run |
-| `vulnGuard.minSeverity` | `low` | Hide findings below this level |
-| `vulnGuard.ai.mode` | `off` | `off` \| `ollama` \| `byok` \| `copilot` |
-| `vulnGuard.ai.analyzeOnSave` | `true` | Verify rule findings on save |
-| `vulnGuard.ai.deepScan` | `false` | Also analyse functions no rule flagged |
-| `vulnGuard.ai.minConfidence` | `0.6` | Confidence needed to dismiss a finding |
-| `vulnGuard.ai.concurrency` | `2` | Parallel model requests (max 4) |
-| `vulnGuard.ai.timeoutMs` | `25000` | Per-request timeout |
-| `vulnGuard.ai.maxChunks` | `40` | Requests per file |
-| `vulnGuard.ollama.baseUrl` / `.model` | `127.0.0.1:11434` / `qwen2.5-coder:7b` | Local backend |
-| `vulnGuard.byok.baseUrl` / `.model` | OpenAI / `gpt-4o-mini` | Remote backend |
-| `vulnGuard.localModel.enabled` | `false` | Run the ONNX triage model |
-| `vulnGuard.localModel.path` | `""` | Artifact directory (`model.onnx`, tokenizer files) |
-| `vulnGuard.localModel.threshold` | `0.5` | P(vulnerable) needed to add a candidate |
-| `vulnGuard.localModel.maxChunks` | `40` | Functions scored per file |
-| `vulnGuard.localModel.workers` | `2` | Inference worker threads (max 4) |
-| `vulnGuard.localModel.timeoutMs` | `10000` | Per-function inference timeout |
+| `vulnLens.enable` | `true` | Master switch |
+| `vulnLens.scanOnSave` / `scanOnOpen` | `true` | When the rules run |
+| `vulnLens.minSeverity` | `low` | Hide findings below this level |
+| `vulnLens.ai.mode` | `off` | `off` \| `ollama` \| `byok` \| `copilot` |
+| `vulnLens.ai.analyzeOnSave` | `true` | Verify rule findings on save |
+| `vulnLens.ai.deepScan` | `false` | Also analyse functions no rule flagged |
+| `vulnLens.ai.minConfidence` | `0.6` | Confidence needed to dismiss a finding |
+| `vulnLens.ai.concurrency` | `2` | Parallel model requests (max 4) |
+| `vulnLens.ai.timeoutMs` | `25000` | Per-request timeout |
+| `vulnLens.ai.maxChunks` | `40` | Requests per file |
+| `vulnLens.ollama.baseUrl` / `.model` | `127.0.0.1:11434` / `qwen2.5-coder:7b` | Local backend |
+| `vulnLens.byok.baseUrl` / `.model` | OpenAI / `gpt-4o-mini` | Remote backend |
+| `vulnLens.localModel.enabled` | `false` | Run the ONNX triage model |
+| `vulnLens.localModel.path` | `""` | Artifact directory (`model.onnx`, tokenizer files) |
+| `vulnLens.localModel.threshold` | `0.5` | P(vulnerable) needed to add a candidate |
+| `vulnLens.localModel.maxChunks` | `40` | Functions scored per file |
+| `vulnLens.localModel.workers` | `2` | Inference worker threads (max 4) |
+| `vulnLens.localModel.timeoutMs` | `10000` | Per-function inference timeout |
 
 ## Privacy
 

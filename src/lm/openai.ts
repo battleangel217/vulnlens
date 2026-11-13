@@ -44,7 +44,7 @@ export class OpenAiCompatibleProvider implements LlmProvider {
       model: this.model,
       detail: this.apiKey
         ? `Using ${this.model} via ${this.baseUrl}`
-        : 'No API key stored. Run: VulnGuard: Set API Key',
+        : 'No API key stored. Run: VulnLens: Set API Key',
     };
   }
 

@@ -1,4 +1,4 @@
-"""Deliberately vulnerable Flask app used to demo VulnGuard.
+"""Deliberately vulnerable Flask app used to demo VulnLens.
 
 Do not deploy this. Open it in VS Code, save, and you should see exactly four
 findings, each marked below, and nothing on the safe counterparts.

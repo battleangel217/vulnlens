@@ -4,7 +4,7 @@
       "rules"
     ],
     "limit": null,
-    "outDir": "/home/battleangel/vuln-guard/eval/results",
+    "outDir": "eval/results",
     "tolerance": 2
   },
   "reports": [
@@ -172,7 +172,7 @@
           "predicted": [],
           "dismissed": [],
           "requests": 0,
-          "ms": 0
+          "ms": 1
         },
         {
           "file": "c19_secrets_token.py",
@@ -814,7 +814,7 @@
       "cleanFalsePositives": 2,
       "cleanFilesWithFalsePositive": 2,
       "requests": 0,
-      "ms": 2
+      "ms": 3
     }
   ]
 }

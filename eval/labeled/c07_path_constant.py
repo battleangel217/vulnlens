@@ -1,6 +1,6 @@
 import os
 
-CONFIG_PATH = "/etc/vulnguard/config.json"
+CONFIG_PATH = "/etc/vulnlens/config.json"
 
 
 def read_config():

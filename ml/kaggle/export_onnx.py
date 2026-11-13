@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Export a fine-tuned CodeBERT checkpoint to the ONNX artifact VulnGuard loads.
+"""Export a fine-tuned CodeBERT checkpoint to the ONNX artifact VulnLens loads.
 
     python ml/kaggle/export_onnx.py \
         --checkpoint /kaggle/working/codebert-vuln \
         --out /kaggle/working/vuln-model
 
-The output directory is the thing you copy to `vulnGuard.localModel.path`:
+The output directory is the thing you copy to `vulnLens.localModel.path`:
 
     model.onnx      int64 input_ids/attention_mask -> float32 logits [1, 2]
     vocab.json      RoBERTa byte-level BPE vocabulary

@@ -4,12 +4,12 @@ import { OllamaProvider } from './ollama';
 import { OpenAiCompatibleProvider } from './openai';
 import type { LlmProvider, ProviderStatus } from './types';
 
-export const API_KEY_SECRET = 'vulnGuard.byok.apiKey';
+export const API_KEY_SECRET = 'vulnLens.byok.apiKey';
 
 export type AiMode = 'off' | 'ollama' | 'byok' | 'copilot';
 
 function config(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('vulnGuard');
+  return vscode.workspace.getConfiguration('vulnLens');
 }
 
 export function aiMode(): AiMode {
@@ -75,7 +75,7 @@ export async function describeProvider(secrets: vscode.SecretStorage): Promise<P
       label: 'Off',
       model: '',
       detail:
-        'AI verification is off. Set "vulnGuard.ai.mode" to ollama, byok, or copilot to enable it.',
+        'AI verification is off. Set "vulnLens.ai.mode" to ollama, byok, or copilot to enable it.',
     };
   }
 
@@ -87,7 +87,7 @@ export async function describeProvider(secrets: vscode.SecretStorage): Promise<P
       available: false,
       label: 'OpenAI-compatible',
       model: config().get<string>('byok.model', 'gpt-4o-mini'),
-      detail: 'No API key stored. Run "VulnGuard: Set API Key (BYOK)".',
+      detail: 'No API key stored. Run "VulnLens: Set API Key (BYOK)".',
     };
   }
 

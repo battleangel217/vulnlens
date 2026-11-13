@@ -41,10 +41,10 @@ const warned = new Set<string>();
 
 export function activate(context: vscode.ExtensionContext): void {
   extensionContext = context;
-  diagnostics = vscode.languages.createDiagnosticCollection('vuln-guard');
-  output = vscode.window.createOutputChannel('VulnGuard');
+  diagnostics = vscode.languages.createDiagnosticCollection('vuln-lens');
+  output = vscode.window.createOutputChannel('VulnLens');
   statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBar.command = 'vulnGuard.scanFile';
+  statusBar.command = 'vulnLens.scanFile';
   statusBar.show();
 
   const getFindings = (uri: vscode.Uri): readonly PresentedFinding[] =>
@@ -55,37 +55,37 @@ export function activate(context: vscode.ExtensionContext): void {
     output,
     statusBar,
     registerHoverProvider(getFindings),
-    registerCodeActions(getFindings, 'vulnGuard.analyzeFile'),
+    registerCodeActions(getFindings, 'vulnLens.analyzeFile'),
 
-    vscode.commands.registerCommand('vulnGuard.scanFile', () =>
+    vscode.commands.registerCommand('vulnLens.scanFile', () =>
       scanActive({ announce: true }),
     ),
 
-    vscode.commands.registerCommand('vulnGuard.analyzeFile', () =>
+    vscode.commands.registerCommand('vulnLens.analyzeFile', () =>
       scanActive({ announce: true, forceAi: true, allowPrompt: true }),
     ),
 
-    vscode.commands.registerCommand('vulnGuard.clearDiagnostics', () => {
+    vscode.commands.registerCommand('vulnLens.clearDiagnostics', () => {
       for (const state of documents.values()) state.abort?.abort();
       documents.clear();
       diagnostics.clear();
       updateStatusBar();
-      output.appendLine('[vuln-guard] diagnostics cleared');
+      output.appendLine('[vuln-lens] diagnostics cleared');
     }),
 
-    vscode.commands.registerCommand('vulnGuard.setApiKey', () => setApiKey()),
+    vscode.commands.registerCommand('vulnLens.setApiKey', () => setApiKey()),
 
-    vscode.commands.registerCommand('vulnGuard.clearApiKey', async () => {
+    vscode.commands.registerCommand('vulnLens.clearApiKey', async () => {
       await context.secrets.delete(API_KEY_SECRET);
       warned.clear();
-      void vscode.window.showInformationMessage('VulnGuard: stored API key removed.');
+      void vscode.window.showInformationMessage('VulnLens: stored API key removed.');
     }),
 
-    vscode.commands.registerCommand('vulnGuard.checkProvider', () => checkProvider()),
+    vscode.commands.registerCommand('vulnLens.checkProvider', () => checkProvider()),
 
-    vscode.commands.registerCommand('vulnGuard.checkLocalModel', () => checkLocalModel()),
+    vscode.commands.registerCommand('vulnLens.checkLocalModel', () => checkLocalModel()),
 
-    vscode.commands.registerCommand('vulnGuard.showReport', () => writeReport()),
+    vscode.commands.registerCommand('vulnLens.showReport', () => writeReport()),
 
     vscode.workspace.onDidOpenTextDocument((document) => {
       if (config().get<boolean>('scanOnOpen', true)) void scanDocument(document);
@@ -104,7 +104,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (!event.affectsConfiguration('vulnGuard')) return;
+      if (!event.affectsConfiguration('vulnLens')) return;
       warned.clear();
       resetCopilotInstance();
       resetPool();
@@ -123,7 +123,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   updateStatusBar();
   output.appendLine(
-    '[vuln-guard] activated (6 rules, AI mode: ' +
+    '[vuln-lens] activated (6 rules, AI mode: ' +
       aiMode() +
       ', local model: ' +
       (localModelConfig().enabled ? 'on' : 'off') +
@@ -139,13 +139,13 @@ export function deactivate(): void {
 }
 
 function config(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('vulnGuard');
+  return vscode.workspace.getConfiguration('vulnLens');
 }
 
 function scanActive(options: Parameters<typeof scanDocument>[1]): void {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    void vscode.window.showInformationMessage('VulnGuard: open a Python file first.');
+    void vscode.window.showInformationMessage('VulnLens: open a Python file first.');
     return;
   }
   void scanDocument(editor.document, options);
@@ -174,8 +174,8 @@ async function scanDocument(
 
   const source = document.getText();
   if (Buffer.byteLength(source, 'utf8') > MAX_FILE_BYTES) {
-    output.appendLine(`[vuln-guard] skipped ${vscode.workspace.asRelativePath(document.uri)}: file too large`);
-    if (options.announce) void vscode.window.showWarningMessage('VulnGuard: file is too large to scan.');
+    output.appendLine(`[vuln-lens] skipped ${vscode.workspace.asRelativePath(document.uri)}: file too large`);
+    if (options.announce) void vscode.window.showWarningMessage('VulnLens: file is too large to scan.');
     return;
   }
 
@@ -196,7 +196,7 @@ async function scanDocument(
   // Instant, offline feedback.
   publish(document, presentFindings({ hits: hitList, chunks, analyses: [] }), state);
   output.appendLine(
-    `[vuln-guard] ${vscode.workspace.asRelativePath(document.uri)}: ${hitList.length} rule finding(s) in ${Date.now() - startedAt}ms`,
+    `[vuln-lens] ${vscode.workspace.asRelativePath(document.uri)}: ${hitList.length} rule finding(s) in ${Date.now() - startedAt}ms`,
   );
 
   const mode = aiMode();
@@ -207,8 +207,8 @@ async function scanDocument(
     if (options.announce) {
       void vscode.window.showInformationMessage(
         hitList.length === 0
-          ? 'VulnGuard: no findings.'
-          : `VulnGuard: ${hitList.length} finding(s). AI verification is ${mode === 'off' ? 'off' : 'disabled for saves'}.`,
+          ? 'VulnLens: no findings.'
+          : `VulnLens: ${hitList.length} finding(s). AI verification is ${mode === 'off' ? 'off' : 'disabled for saves'}.`,
       );
     }
     return;
@@ -224,8 +224,8 @@ async function scanDocument(
     warnOnce(
       `provider:${mode}`,
       mode === 'copilot'
-        ? 'VulnGuard: no Copilot model is available yet. Run "VulnGuard: Analyze Current File with AI" to request access.'
-        : 'VulnGuard: no AI provider is configured. Run "VulnGuard: Check AI Provider".',
+        ? 'VulnLens: no Copilot model is available yet. Run "VulnLens: Analyze Current File with AI" to request access.'
+        : 'VulnLens: no AI provider is configured. Run "VulnLens: Check AI Provider".',
       'Check Provider',
     );
     return;
@@ -233,7 +233,7 @@ async function scanDocument(
 
   const status = await provider.status();
   if (!status.available) {
-    warnOnce(`status:${status.detail}`, `VulnGuard: ${status.detail}`, 'Check Provider');
+    warnOnce(`status:${status.detail}`, `VulnLens: ${status.detail}`, 'Check Provider');
     return;
   }
 
@@ -245,7 +245,7 @@ async function scanDocument(
   let triageThreshold = local.threshold;
 
   if (!deep && local.enabled && local.directory) {
-    statusBar.text = '$(sync~spin) VulnGuard: local triage';
+    statusBar.text = '$(sync~spin) VulnLens: local triage';
     const { pool, error } = await ensurePool((line) => output.appendLine(line));
 
     if (pool) {
@@ -256,10 +256,10 @@ async function scanDocument(
       });
       triage = summary.scores;
       output.appendLine(
-        `[vuln-guard] local triage: ${summary.scored} function(s) scored, ${summary.failed} failed, ${Date.now() - triageStartedAt}ms`,
+        `[vuln-lens] local triage: ${summary.scored} function(s) scored, ${summary.failed} failed, ${Date.now() - triageStartedAt}ms`,
       );
     } else if (error) {
-      warnOnce(`local:${error}`, `VulnGuard: local model unavailable (${error})`, 'Open Settings');
+      warnOnce(`local:${error}`, `VulnLens: local model unavailable (${error})`, 'Open Settings');
     }
   }
 
@@ -275,9 +275,9 @@ async function scanDocument(
   if (candidates.length === 0) return;
 
   state.providerLabel = `${provider.label} · ${provider.model}`;
-  statusBar.text = `$(sync~spin) VulnGuard: 0/${candidates.length}`;
+  statusBar.text = `$(sync~spin) VulnLens: 0/${candidates.length}`;
   output.appendLine(
-    `[vuln-guard] analysing ${candidates.length} function(s) with ${provider.id}/${provider.model}`,
+    `[vuln-lens] analysing ${candidates.length} function(s) with ${provider.id}/${provider.model}`,
   );
 
   let failures = 0;
@@ -287,12 +287,12 @@ async function scanDocument(
     signal: state.abort?.signal,
     cache: verdictCache,
     onProgress: (done, total) => {
-      statusBar.text = `$(sync~spin) VulnGuard: ${done}/${total}`;
+      statusBar.text = `$(sync~spin) VulnLens: ${done}/${total}`;
     },
     onError: (candidate, error) => {
       failures += 1;
       output.appendLine(
-        `[vuln-guard] ${candidate.request.functionName}: ${describeError(error)}`,
+        `[vuln-lens] ${candidate.request.functionName}: ${describeError(error)}`,
       );
     },
   });
@@ -316,17 +316,17 @@ async function scanDocument(
   if (failures > 0) {
     warnOnce(
       `failures:${failures}`,
-      `VulnGuard: ${failures} of ${candidates.length} AI request(s) failed. See the VulnGuard output log.`,
+      `VulnLens: ${failures} of ${candidates.length} AI request(s) failed. See the VulnLens output log.`,
       'Show Log',
     );
   } else if (budget > 0) {
-    output.appendLine(`[vuln-guard] ${budget} function(s) were not analysed`);
+    output.appendLine(`[vuln-lens] ${budget} function(s) were not analysed`);
   }
 
   if (options.announce) {
     const active = state.findings.filter((finding) => !finding.dismissed).length;
     void vscode.window.showInformationMessage(
-      `VulnGuard: ${active} finding(s) after AI verification (${results.length} function(s) analysed).`,
+      `VulnLens: ${active} finding(s) after AI verification (${results.length} function(s) analysed).`,
     );
   }
 }
@@ -361,8 +361,8 @@ function toDiagnostic(document: vscode.TextDocument, finding: PresentedFinding):
     : mapSeverity(finding.severity);
 
   const diagnostic = new vscode.Diagnostic(range, finding.message, severity);
-  diagnostic.source = 'vuln-guard';
-  diagnostic.code = finding.cwe ?? 'vuln-guard';
+  diagnostic.source = 'vuln-lens';
+  diagnostic.code = finding.cwe ?? 'vuln-lens';
   if (finding.dismissed) diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
   return diagnostic;
 }
@@ -383,8 +383,8 @@ function updateStatusBar(): void {
   const document = vscode.window.activeTextEditor?.document;
 
   if (!document || document.languageId !== LANGUAGE_ID) {
-    statusBar.text = '$(shield) VulnGuard';
-    statusBar.tooltip = 'VulnGuard: no Python file active';
+    statusBar.text = '$(shield) VulnLens';
+    statusBar.tooltip = 'VulnLens: no Python file active';
     statusBar.backgroundColor = undefined;
     return;
   }
@@ -396,13 +396,13 @@ function updateStatusBar(): void {
 
   statusBar.text =
     active > 0
-      ? `$(shield) VulnGuard: ${active}`
+      ? `$(shield) VulnLens: ${active}`
       : dismissed > 0
-        ? `$(shield) VulnGuard: clean (${dismissed} dismissed)`
-        : '$(shield) VulnGuard: clean';
+        ? `$(shield) VulnLens: clean (${dismissed} dismissed)`
+        : '$(shield) VulnLens: clean';
 
   statusBar.tooltip = [
-    'VulnGuard',
+    'VulnLens',
     state?.providerLabel ? `AI: ${state.providerLabel}` : `AI mode: ${aiMode()}`,
     localModelConfig().enabled ? 'Local model: on' : undefined,
     dismissed > 0 ? `${dismissed} rule finding(s) rejected by AI` : undefined,
@@ -417,7 +417,7 @@ function updateStatusBar(): void {
 
 async function setApiKey(): Promise<void> {
   const value = await vscode.window.showInputBox({
-    title: 'VulnGuard: API key',
+    title: 'VulnLens: API key',
     prompt: 'Key for your OpenAI-compatible endpoint. Stored in the OS keychain, never in settings.',
     password: true,
     ignoreFocusOut: true,
@@ -431,12 +431,12 @@ async function setApiKey(): Promise<void> {
   warned.clear();
 
   const choice = await vscode.window.showInformationMessage(
-    'VulnGuard: API key stored.',
+    'VulnLens: API key stored.',
     aiMode() === 'byok' ? 'Check Provider' : 'Switch to BYOK mode',
   );
   if (choice === 'Switch to BYOK mode') {
     await vscode.workspace
-      .getConfiguration('vulnGuard')
+      .getConfiguration('vulnLens')
       .update('ai.mode', 'byok', vscode.ConfigurationTarget.Global);
   } else if (choice === 'Check Provider') {
     await checkProvider();
@@ -448,15 +448,15 @@ async function checkProvider(): Promise<void> {
   const status = await describeProvider(extensionContext.secrets);
   const summary = `${status.label}${status.model ? ` (${status.model})` : ''} — ${status.detail}`;
 
-  output.appendLine(`[vuln-guard] provider: ${status.available ? 'ready' : 'unavailable'} · ${summary}`);
+  output.appendLine(`[vuln-lens] provider: ${status.available ? 'ready' : 'unavailable'} · ${summary}`);
 
   if (status.available) {
-    void vscode.window.showInformationMessage(`VulnGuard: ${summary}`);
+    void vscode.window.showInformationMessage(`VulnLens: ${summary}`);
     return;
   }
 
   const choice = await vscode.window.showWarningMessage(
-    `VulnGuard: ${summary}`,
+    `VulnLens: ${summary}`,
     aiMode() === 'byok' ? 'Set API Key' : 'Open Settings',
     'Show Log',
   );
@@ -469,14 +469,14 @@ async function checkLocalModel(): Promise<void> {
 
   if (!config.enabled) {
     const choice = await vscode.window.showWarningMessage(
-      'VulnGuard: the local model is disabled. Enable vulnGuard.localModel.enabled and set a model path.',
+      'VulnLens: the local model is disabled. Enable vulnLens.localModel.enabled and set a model path.',
       'Open Settings',
       'Show Log',
     );
     if (choice === 'Open Settings') {
       await vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        'vulnGuard.localModel',
+        'vulnLens.localModel',
       );
     }
     return;
@@ -484,20 +484,20 @@ async function checkLocalModel(): Promise<void> {
 
   if (!config.directory) {
     const choice = await vscode.window.showWarningMessage(
-      'VulnGuard: set vulnGuard.localModel.path to a directory containing model.onnx, vocab.json and merges.txt.',
+      'VulnLens: set vulnLens.localModel.path to a directory containing model.onnx, vocab.json and merges.txt.',
       'Open Settings',
       'Show Log',
     );
     if (choice === 'Open Settings') {
       await vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        'vulnGuard.localModel.path',
+        'vulnLens.localModel.path',
       );
     }
     return;
   }
 
-  output.appendLine(`[vuln-guard] checking local model at ${config.directory}`);
+  output.appendLine(`[vuln-lens] checking local model at ${config.directory}`);
 
   try {
     const { outcome, ms, probability } = await probeLocalModel((line) => output.appendLine(line));
@@ -505,14 +505,14 @@ async function checkLocalModel(): Promise<void> {
 
     if (!pool) {
       const choice = await vscode.window.showWarningMessage(
-        `VulnGuard: local model unavailable — ${outcome.error ?? 'unknown error'}`,
+        `VulnLens: local model unavailable — ${outcome.error ?? 'unknown error'}`,
         'Open Settings',
         'Show Log',
       );
       if (choice === 'Open Settings') {
         await vscode.commands.executeCommand(
           'workbench.action.openSettings',
-          'vulnGuard.localModel',
+          'vulnLens.localModel',
         );
       } else if (choice === 'Show Log') {
         output.show(true);
@@ -525,12 +525,12 @@ async function checkLocalModel(): Promise<void> {
       `probe ${(probability * 100).toFixed(0)}% vulnerable in ${ms}ms, ` +
       `threshold ${(config.threshold * 100).toFixed(0)}%`;
 
-    output.appendLine(`[vuln-guard] ${summary}`);
-    void vscode.window.showInformationMessage(`VulnGuard: ${summary}`);
+    output.appendLine(`[vuln-lens] ${summary}`);
+    void vscode.window.showInformationMessage(`VulnLens: ${summary}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    output.appendLine(`[vuln-guard] local model probe failed: ${message}`);
-    void vscode.window.showWarningMessage(`VulnGuard: local model probe failed — ${message}`);
+    output.appendLine(`[vuln-lens] local model probe failed: ${message}`);
+    void vscode.window.showWarningMessage(`VulnLens: local model probe failed — ${message}`);
   }
 }
 
@@ -539,7 +539,7 @@ function writeReport(): void {
   output.clear();
 
   if (!document || document.languageId !== LANGUAGE_ID) {
-    output.appendLine('VulnGuard: no active Python file.');
+    output.appendLine('VulnLens: no active Python file.');
     output.show(true);
     return;
   }
@@ -548,7 +548,7 @@ function writeReport(): void {
   const findings = state?.findings ?? [];
   const counts = { critical: 0, high: 0, medium: 0, low: 0 };
 
-  output.appendLine('VulnGuard report');
+  output.appendLine('VulnLens report');
   output.appendLine(`File:    ${vscode.workspace.asRelativePath(document.uri)}`);
   output.appendLine(`AI mode: ${aiMode()}${state?.providerLabel ? ` (${state.providerLabel})` : ''}`);
   output.appendLine(
@@ -595,7 +595,7 @@ function writeReport(): void {
 }
 
 function warnOnce(key: string, message: string, action: string): void {
-  output.appendLine(`[vuln-guard] ${message}`);
+  output.appendLine(`[vuln-lens] ${message}`);
   if (warned.has(key)) return;
   warned.add(key);
 
@@ -606,7 +606,7 @@ function warnOnce(key: string, message: string, action: string): void {
     else if (choice === 'Open Settings') {
       void vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        'vulnGuard.localModel',
+        'vulnLens.localModel',
       );
     }
   });

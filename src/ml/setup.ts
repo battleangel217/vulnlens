@@ -21,7 +21,7 @@ export interface PoolOutcome {
 }
 
 export function localModelConfig(): LocalModelConfig {
-  const config = vscode.workspace.getConfiguration('vulnGuard.localModel');
+  const config = vscode.workspace.getConfiguration('vulnLens.localModel');
   return {
     enabled: config.get<boolean>('enabled', false),
     directory: config.get<string>('path', '').trim(),
@@ -52,12 +52,12 @@ async function start(config: LocalModelConfig, log: Logger): Promise<PoolOutcome
 
     current = pool;
     log(
-      `[vuln-guard] local model ready: ${config.directory} (${pool.stats.workers} worker thread(s))`,
+      `[vuln-lens] local model ready: ${config.directory} (${pool.stats.workers} worker thread(s))`,
     );
     return { pool };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    log(`[vuln-guard] local model unavailable: ${message}`);
+    log(`[vuln-lens] local model unavailable: ${message}`);
     return { pool: null, error: message };
   }
 }
@@ -65,9 +65,9 @@ async function start(config: LocalModelConfig, log: Logger): Promise<PoolOutcome
 export async function ensurePool(log: Logger): Promise<PoolOutcome> {
   const config = localModelConfig();
 
-  if (!config.enabled) return { pool: null, error: 'vulnGuard.localModel.enabled is false' };
+  if (!config.enabled) return { pool: null, error: 'vulnLens.localModel.enabled is false' };
   if (!config.directory) {
-    return { pool: null, error: 'Set vulnGuard.localModel.path to an exported model directory' };
+    return { pool: null, error: 'Set vulnLens.localModel.path to an exported model directory' };
   }
 
   const key = keyFor(config);

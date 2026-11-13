@@ -43,8 +43,8 @@ root.
 
 ```python
 !pip install -q transformers datasets scikit-learn onnx onnxruntime
-!git clone https://github.com/<you>/vuln-guard.git
-%cd vuln-guard
+!git clone https://github.com/<you>/vuln-lens.git
+%cd vuln-lens
 ```
 
 ### 1. Prepare PrimeVul
@@ -120,7 +120,7 @@ Options:
 Download the artifact directory from Kaggle, then:
 
 ```bash
-cd vuln-guard
+cd vuln-lens
 npm install onnxruntime-node   # optional, ~100 MB; only needed for local inference
 ```
 
@@ -128,13 +128,13 @@ Set in VS Code:
 
 ```json
 {
-  "vulnGuard.localModel.enabled": true,
-  "vulnGuard.localModel.path": "/absolute/path/to/vuln-model",
-  "vulnGuard.localModel.threshold": 0.35
+  "vulnLens.localModel.enabled": true,
+  "vulnLens.localModel.path": "/absolute/path/to/vuln-model",
+  "vulnLens.localModel.threshold": 0.35
 }
 ```
 
-Run **VulnGuard: Check Local Model** to load the graph and score a known
+Run **VulnLens: Check Local Model** to load the graph and score a known
 SQL-injection probe. The command reports the worker count, probe probability,
 latency, and the active threshold.
 

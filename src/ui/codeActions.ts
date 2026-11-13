@@ -17,10 +17,10 @@ function matchFinding(
   findings: readonly PresentedFinding[],
   diagnostic: vscode.Diagnostic,
 ): PresentedFinding | undefined {
-  const code = String(diagnostic.code ?? 'vuln-guard');
+  const code = String(diagnostic.code ?? 'vuln-lens');
   return findings.find(
     (finding) =>
-      finding.line === diagnostic.range.start.line && (finding.cwe ?? 'vuln-guard') === code,
+      finding.line === diagnostic.range.start.line && (finding.cwe ?? 'vuln-lens') === code,
   );
 }
 
@@ -47,14 +47,14 @@ export function registerCodeActions(
         const handled = new Set<PresentedFinding>();
 
         for (const diagnostic of context.diagnostics) {
-          if (diagnostic.source !== 'vuln-guard') continue;
+          if (diagnostic.source !== 'vuln-lens') continue;
           const finding = matchFinding(findings, diagnostic);
           if (!finding || handled.has(finding)) continue;
           handled.add(finding);
 
           if (isFixApplicable(document, finding)) {
             const action = new vscode.CodeAction(
-              'VulnGuard: Apply suggested fix',
+              'VulnLens: Apply suggested fix',
               vscode.CodeActionKind.QuickFix,
             );
             action.isPreferred = true;
@@ -68,7 +68,7 @@ export function registerCodeActions(
           const line = document.lineAt(Math.min(finding.line, document.lineCount - 1));
           if (!line.text.includes('vuln-ignore')) {
             const action = new vscode.CodeAction(
-              'VulnGuard: Ignore this finding',
+              'VulnLens: Ignore this finding',
               vscode.CodeActionKind.QuickFix,
             );
             action.diagnostics = [diagnostic];
@@ -80,7 +80,7 @@ export function registerCodeActions(
           }
 
           const reanalyze = new vscode.CodeAction(
-            'VulnGuard: Re-analyze this file with AI',
+            'VulnLens: Re-analyze this file with AI',
             vscode.CodeActionKind.QuickFix,
           );
           reanalyze.diagnostics = [diagnostic];
