@@ -35,6 +35,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint", type=Path, required=True, help="HF checkpoint directory")
     parser.add_argument("--out", type=Path, required=True, help="Artifact directory to create")
     parser.add_argument("--max-length", type=int, default=512)
+    parser.add_argument(
+        "--tokenizer",
+        default="microsoft/codebert-base",
+        help=(
+            "Slow tokenizer used to source vocab.json/merges.txt when the "
+            "checkpoint only contains tokenizer.json (default: %(default)s)."
+        ),
+    )
     parser.add_argument("--opset", type=int, default=DEFAULT_OPSET)
     parser.add_argument(
         "--no-quantize",
@@ -138,12 +146,30 @@ def main() -> int:
 
     missing = [name for name in ("vocab.json", "merges.txt") if not (args.out / name).exists()]
     if missing:
-        print(
-            f"error: tokenizer did not write {missing}. The extension requires both "
-            "files; pass a checkpoint saved with the slow CodeBERT tokenizer.",
-            file=sys.stderr,
-        )
-        return 1
+        # A fast tokenizer writes tokenizer.json but not the slow vocabulary
+        # files. The extension's BPE reader needs vocab.json/merges.txt, so
+        # source them from the base tokenizer instead of failing the export.
+        try:
+            from transformers import RobertaTokenizer
+
+            slow = RobertaTokenizer.from_pretrained(args.tokenizer)
+            slow.save_vocabulary(str(args.out))
+        except Exception as error:  # noqa: BLE001 - report the real reason
+            print(
+                f"error: tokenizer did not write {missing}, and loading "
+                f"{args.tokenizer} failed: {error}",
+                file=sys.stderr,
+            )
+            return 1
+
+        missing = [name for name in ("vocab.json", "merges.txt") if not (args.out / name).exists()]
+        if missing:
+            print(
+                f"error: tokenizer did not write {missing}. The extension requires both "
+                "files; pass a checkpoint saved with the slow CodeBERT tokenizer.",
+                file=sys.stderr,
+            )
+            return 1
 
     labels = []
     for index in range(model.config.num_labels):

@@ -332,7 +332,7 @@ def main() -> int:
     raw["validation"] = subsample(raw["validation"], args.max_eval, args.seed)
     raw["test"] = subsample(raw["test"], args.max_eval, args.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
     encoded = {split: tokenize_rows(tokenizer, rows, args.max_length) for split, rows in raw.items()}
 
     collator = DataCollatorWithPadding(tokenizer=tokenizer)
