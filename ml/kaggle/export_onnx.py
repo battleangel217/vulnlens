@@ -199,6 +199,10 @@ def main() -> int:
         },
         opset_version=args.opset,
         do_constant_folding=True,
+        # PyTorch 2.6+ defaults to the TorchDynamo exporter, which imports
+        # onnxscript. The legacy exporter is deterministic and has no extra
+        # dependency; the graph is the same for this model.
+        dynamo=False,
     )
 
     drift: list[dict[str, Any]] = []
