@@ -3,6 +3,8 @@
 Security review for Python, inside VS Code. Deterministic rules run on every
 save and flag the obvious things in milliseconds. An optional AI layer then
 confirms or rejects those findings, explains the data flow, and writes the fix.
+An optional local CodeBERT model can nominate functions the rules did not flag,
+without sending anything off the machine.
 
 The point of running rules first is cost and honesty: the model only sees
 functions that already look suspicious, and every verdict can be compared against
@@ -11,7 +13,10 @@ the rule that produced it.
 ```
 save ──▶ 6 CWE rules (offline, ~5ms) ──▶ diagnostics appear immediately
                   │
-                  └──▶ candidates only ──▶ Ollama / BYOK / Copilot
+                  └──▶ candidates ──▶ local CodeBERT triage (optional, offline)
+                                            │ nominates extra functions
+                                            ▼
+                                     Ollama / BYOK / Copilot
                                                 │
                             confirms ──▶ severity + explanation + fix
                             rejects  ──▶ finding struck through as "false positive"
@@ -80,6 +85,42 @@ Requests are bounded: one function per call, default concurrency 2, 25s timeout,
 unchanged function is never billed twice. Cancelling a scan aborts in-flight
 requests.
 
+## Local triage model (optional)
+
+A fine-tuned CodeBERT classifier can run locally, in worker threads, before the
+AI layer. It scores each function and promotes the ones above
+`vulnGuard.localModel.threshold` into the candidate list. It **cannot create a
+finding on its own**: its only output is "send this function to the verifier".
+
+Why it exists: rules have a known recall ceiling (see the misses below), and
+`ai.deepScan` is an expensive way to find those misses. A local model scores
+every function for free, so the LLM budget goes where the probability is highest.
+
+It is off by default and needs two things:
+
+1. An exported artifact (`model.onnx`, `vocab.json`, `merges.txt`) from
+   [`ml/`](ml/README.md). No model is committed to this repository.
+2. `npm install onnxruntime-node` in the extension folder. The runtime is loaded
+   lazily, so rules-only installs stay small.
+
+```json
+{
+  "vulnGuard.localModel.enabled": true,
+  "vulnGuard.localModel.path": "/absolute/path/to/vuln-model",
+  "vulnGuard.localModel.threshold": 0.35
+}
+```
+
+Run **VulnGuard: Check Local Model** to verify the graph, worker count, probe
+latency, and threshold. A missing runtime, missing file, or corrupt graph
+produces an actionable warning; it never breaks activation or the rule layer.
+Inference failures are isolated per function, and a timed-out worker is replaced.
+
+Training and export happen on Kaggle, not here: `ml/data/prepare_primevul.py`,
+`ml/kaggle/train_codebert.py`, and `ml/kaggle/export_onnx.py`. The corpus is
+C/C++, so Python transfer is measured separately and reported honestly — see
+[`ml/README.md`](ml/README.md) and [`eval/MODEL_RESULTS.md`](eval/MODEL_RESULTS.md).
+
 ## Commands
 
 | Command | Purpose |
@@ -87,6 +128,7 @@ requests.
 | `VulnGuard: Scan Current File` | Rules only, instant |
 | `VulnGuard: Analyze Current File with AI` | Rules + verification (honours `ai.deepScan`) |
 | `VulnGuard: Check AI Provider` | Reachability, model presence, actionable fix |
+| `VulnGuard: Check Local Model` | Load the ONNX artifact and score a probe function |
 | `VulnGuard: Set API Key (BYOK)` | Store key in the OS keychain |
 | `VulnGuard: Forget API Key` | Delete it |
 | `VulnGuard: Show Report` | Per-file summary in the output panel |
@@ -108,6 +150,12 @@ requests.
 | `vulnGuard.ai.maxChunks` | `40` | Requests per file |
 | `vulnGuard.ollama.baseUrl` / `.model` | `127.0.0.1:11434` / `qwen2.5-coder:7b` | Local backend |
 | `vulnGuard.byok.baseUrl` / `.model` | OpenAI / `gpt-4o-mini` | Remote backend |
+| `vulnGuard.localModel.enabled` | `false` | Run the ONNX triage model |
+| `vulnGuard.localModel.path` | `""` | Artifact directory (`model.onnx`, tokenizer files) |
+| `vulnGuard.localModel.threshold` | `0.5` | P(vulnerable) needed to add a candidate |
+| `vulnGuard.localModel.maxChunks` | `40` | Functions scored per file |
+| `vulnGuard.localModel.workers` | `2` | Inference worker threads (max 4) |
+| `vulnGuard.localModel.timeoutMs` | `10000` | Per-function inference timeout |
 
 ## Privacy
 
@@ -116,6 +164,10 @@ the file, not the repository, not your other tabs — is sent to the backend you
 chose. `ollama` keeps everything on localhost. `byok` and `copilot` send code to
 that vendor under your account. Diagnostics and the cache stay in memory and are
 discarded when the window closes.
+
+The local triage model is **offline**. It runs in worker threads inside the
+extension host, reads only the configured artifact directory, and makes no
+network requests.
 
 ## Suppressing a finding
 
@@ -150,20 +202,34 @@ src/
     present.ts             merge rules + verdicts into renderable findings
     hover.ts               explanation, confidence, suggested fix
     codeActions.ts         apply fix / ignore / re-analyze
+  ml/
+    bpe.ts                 RoBERTa byte-level BPE, no native dependency
+    classifier.ts          lazy ONNX session, logits -> probabilities
+    pool.ts                worker pool: startup, crash, timeout, close
+    worker.ts              worker entry; owns the ONNX session
+    triage.ts              score functions, isolate failures
+    setup.ts               VS Code config and pool lifecycle
   extension.ts             wiring, commands, status bar, report
+ml/
+  data/prepare_primevul.py download, dedupe, split the training corpus
+  kaggle/train_codebert.py class-weighted fine-tuning, PR-AUC, recall floors
+  kaggle/export_onnx.py    ONNX export, int8 quantization, drift checks
 eval/
   labeled/                 corpus source of truth, inline # KLABEL markers
   corpus/                  generated marker-free copies (gitignored)
   extract-labels.mjs       markers -> labels.json, strips the markers
   run_eval.ts              rules -> provider -> presentFindings, end to end
+  run_model_eval.ts        ONNX triage: file precision/recall + issue coverage
   score.ts                 TP/FP/FN matching and precision/recall
-  RESULTS.md               committed output of the last run
+  model_score.ts           threshold sweep for the local model
+  RESULTS.md               committed output of the last rules run
 ```
 
 Everything under `scan/`, `lm/verdict.ts`, `lm/prompt.ts`, `lm/analyzer.ts`,
-`lm/candidates.ts`, and `ui/present.ts` is free of `vscode` imports and is unit
-tested without an extension host. Only the providers that need VS Code
-(`copilot.ts`, `index.ts`) and the UI layer touch the editor API.
+`lm/candidates.ts`, `ui/present.ts`, and `ml/` (except `setup.ts`) is free of
+`vscode` imports and is unit tested without an extension host. Only the
+providers that need VS Code (`copilot.ts`, `index.ts`), the UI layer, and
+`ml/setup.ts` touch the editor API.
 
 ## Evaluation
 
@@ -181,6 +247,21 @@ The evaluator runs the production pipeline end to end — `scanPython` →
 `buildCandidates` → provider → `presentFindings` — and matches predictions to
 labels by CWE within ±2 lines. A finding the AI dismisses counts as a miss, not
 a false positive, so a model cannot inflate precision by suppressing everything.
+
+### Local model evaluation
+
+The ONNX classifier is evaluated as a triage step, not as a CWE detector:
+
+```bash
+npm run eval:model -- --model /absolute/path/to/vuln-model
+```
+
+It writes `eval/MODEL_RESULTS.md` and `eval/results/model.json`, reporting
+file-level precision/recall across a threshold sweep and, more importantly, how
+many labelled issues fall inside a function the model scored above the threshold.
+No model artifact is committed and `onnxruntime-node` is optional, so this
+command exits with a clear message when either is missing rather than printing
+invented numbers.
 
 ### Current results (rules only)
 
@@ -227,7 +308,7 @@ machine with Ollama produces the rules+AI and deep-scan rows.
 ## Tests
 
 ```bash
-npm test        # 100 tests, ~0.6s
+npm test        # 141 tests, ~1s
 npm run check   # typecheck + tests
 ```
 
@@ -243,6 +324,17 @@ The suite includes:
 - merge tests for confirm, reject, and AI-only findings
 - scoring tests for the evaluator itself: tolerance, CWE mismatch, duplicate
   findings, and empty-denominator handling
+- tokenizer tests against the RoBERTa byte-level BPE contract, including
+  multi-byte UTF-8 and merge ordering
+- classifier tests with an injected fake runtime: two-logit, sigmoid, reordered
+  labels, and every `LocalModelError` path
+- worker-pool tests using a real child process: startup failure, crash
+  replacement, per-request timeout, and queued requests during close
+- triage tests for clamping, caps, short snippets, failure isolation, and
+  timeouts; candidate tests prove rule hits win the request budget over model
+  hits
+- model-evaluation tests for threshold sweeps, file-level metrics, and issue
+  coverage
 
 ## Known limitations
 
@@ -252,6 +344,9 @@ The suite includes:
   but data crossing a function boundary or a class attribute is not.
 - **Rules are heuristics, AI is probabilistic.** A finding means "look here".
   A dismissal means "the model disagreed", not "proven safe".
+- **The local model is trained on C/C++.** It is a triage aid for Python, not a
+  Python vulnerability detector; its Python numbers are in `eval/MODEL_RESULTS.md`
+  when an artifact has been evaluated.
 - **Python only.**
 
 ## Roadmap
@@ -260,7 +355,12 @@ The suite includes:
   recall, and false positives on clean repositories for rules vs rules+AI vs
   deep scan. Rules are measured; AI rows need a local model or a key.
 - **M4** — CodeBERT fine-tuned on PrimeVul, exported to ONNX, run in a worker
-  thread as a local high-recall triage step in front of the LLM.
+  thread as a local high-recall triage step in front of the LLM. Training and
+  export scripts live in `ml/`; the artifact is intentionally not committed, and
+  Python transfer is measured by `npm run eval:model`.
+- **M5** — in-domain Python training data. PrimeVul is C/C++, so the first local
+  model is a baseline; Python vulnerability data (or a Python-specific encoder)
+  is the next honest improvement.
 
 ## License
 

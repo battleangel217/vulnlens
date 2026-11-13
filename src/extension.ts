@@ -10,6 +10,8 @@ import {
 } from './lm';
 import { describeError } from './lm/types';
 import type { LlmVerdict } from './lm/verdict';
+import { localModelConfig, closePool, ensurePool, probeLocalModel, resetPool } from './ml/setup';
+import { triageChunks } from './ml/triage';
 import { chunkPython } from './scan/chunker';
 import { scanPython } from './scan/scanner';
 import { SEVERITY_ORDER, type Severity } from './types';
@@ -81,6 +83,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand('vulnGuard.checkProvider', () => checkProvider()),
 
+    vscode.commands.registerCommand('vulnGuard.checkLocalModel', () => checkLocalModel()),
+
     vscode.commands.registerCommand('vulnGuard.showReport', () => writeReport()),
 
     vscode.workspace.onDidOpenTextDocument((document) => {
@@ -103,6 +107,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (!event.affectsConfiguration('vulnGuard')) return;
       warned.clear();
       resetCopilotInstance();
+      resetPool();
       for (const document of vscode.workspace.textDocuments) {
         void scanDocument(document, { forceAi: true });
       }
@@ -117,13 +122,20 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   updateStatusBar();
-  output.appendLine('[vuln-guard] activated (6 rules, AI mode: ' + aiMode() + ')');
+  output.appendLine(
+    '[vuln-guard] activated (6 rules, AI mode: ' +
+      aiMode() +
+      ', local model: ' +
+      (localModelConfig().enabled ? 'on' : 'off') +
+      ')',
+  );
 }
 
 export function deactivate(): void {
   for (const state of documents.values()) state.abort?.abort();
   documents.clear();
   diagnostics?.clear();
+  void closePool();
 }
 
 function config(): vscode.WorkspaceConfiguration {
@@ -226,11 +238,38 @@ async function scanDocument(
   }
 
   const maxChunks = config().get<number>('ai.maxChunks', 40);
+  const deep = options.deep ?? config().get<boolean>('ai.deepScan', false);
+  const local = localModelConfig();
+
+  let triage: ReadonlyMap<number, number> | undefined;
+  let triageThreshold = local.threshold;
+
+  if (!deep && local.enabled && local.directory) {
+    statusBar.text = '$(sync~spin) VulnGuard: local triage';
+    const { pool, error } = await ensurePool((line) => output.appendLine(line));
+
+    if (pool) {
+      const triageStartedAt = Date.now();
+      const summary = await triageChunks(chunks, (code) => pool.score(code), {
+        maxChunks: local.maxChunks,
+        timeoutMs: local.timeoutMs,
+      });
+      triage = summary.scores;
+      output.appendLine(
+        `[vuln-guard] local triage: ${summary.scored} function(s) scored, ${summary.failed} failed, ${Date.now() - triageStartedAt}ms`,
+      );
+    } else if (error) {
+      warnOnce(`local:${error}`, `VulnGuard: local model unavailable (${error})`, 'Open Settings');
+    }
+  }
+
   const candidates = buildCandidates({
     chunks,
     hits: hitList,
-    deep: options.deep ?? config().get<boolean>('ai.deepScan', false),
+    deep,
     max: maxChunks,
+    triage,
+    triageThreshold,
   });
 
   if (candidates.length === 0) return;
@@ -365,6 +404,7 @@ function updateStatusBar(): void {
   statusBar.tooltip = [
     'VulnGuard',
     state?.providerLabel ? `AI: ${state.providerLabel}` : `AI mode: ${aiMode()}`,
+    localModelConfig().enabled ? 'Local model: on' : undefined,
     dismissed > 0 ? `${dismissed} rule finding(s) rejected by AI` : undefined,
     'Click to rescan',
   ]
@@ -424,6 +464,76 @@ async function checkProvider(): Promise<void> {
   else if (choice === 'Show Log') output.show(true);
 }
 
+async function checkLocalModel(): Promise<void> {
+  const config = localModelConfig();
+
+  if (!config.enabled) {
+    const choice = await vscode.window.showWarningMessage(
+      'VulnGuard: the local model is disabled. Enable vulnGuard.localModel.enabled and set a model path.',
+      'Open Settings',
+      'Show Log',
+    );
+    if (choice === 'Open Settings') {
+      await vscode.commands.executeCommand(
+        'workbench.action.openSettings',
+        'vulnGuard.localModel',
+      );
+    }
+    return;
+  }
+
+  if (!config.directory) {
+    const choice = await vscode.window.showWarningMessage(
+      'VulnGuard: set vulnGuard.localModel.path to a directory containing model.onnx, vocab.json and merges.txt.',
+      'Open Settings',
+      'Show Log',
+    );
+    if (choice === 'Open Settings') {
+      await vscode.commands.executeCommand(
+        'workbench.action.openSettings',
+        'vulnGuard.localModel.path',
+      );
+    }
+    return;
+  }
+
+  output.appendLine(`[vuln-guard] checking local model at ${config.directory}`);
+
+  try {
+    const { outcome, ms, probability } = await probeLocalModel((line) => output.appendLine(line));
+    const pool = outcome.pool;
+
+    if (!pool) {
+      const choice = await vscode.window.showWarningMessage(
+        `VulnGuard: local model unavailable — ${outcome.error ?? 'unknown error'}`,
+        'Open Settings',
+        'Show Log',
+      );
+      if (choice === 'Open Settings') {
+        await vscode.commands.executeCommand(
+          'workbench.action.openSettings',
+          'vulnGuard.localModel',
+        );
+      } else if (choice === 'Show Log') {
+        output.show(true);
+      }
+      return;
+    }
+
+    const summary =
+      `local model ready — ${pool.stats.workers} worker(s), ` +
+      `probe ${(probability * 100).toFixed(0)}% vulnerable in ${ms}ms, ` +
+      `threshold ${(config.threshold * 100).toFixed(0)}%`;
+
+    output.appendLine(`[vuln-guard] ${summary}`);
+    void vscode.window.showInformationMessage(`VulnGuard: ${summary}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    output.appendLine(`[vuln-guard] local model probe failed: ${message}`);
+    void vscode.window.showWarningMessage(`VulnGuard: local model probe failed — ${message}`);
+  }
+}
+
 function writeReport(): void {
   const document = vscode.window.activeTextEditor?.document;
   output.clear();
@@ -441,6 +551,9 @@ function writeReport(): void {
   output.appendLine('VulnGuard report');
   output.appendLine(`File:    ${vscode.workspace.asRelativePath(document.uri)}`);
   output.appendLine(`AI mode: ${aiMode()}${state?.providerLabel ? ` (${state.providerLabel})` : ''}`);
+  output.appendLine(
+    `Local:   ${localModelConfig().enabled ? localModelConfig().directory || '(no path set)' : 'off'}`,
+  );
   output.appendLine(`Rules:   6 CWEs`);
   output.appendLine('');
 
@@ -490,5 +603,11 @@ function warnOnce(key: string, message: string, action: string): void {
     if (!choice) return;
     if (choice === 'Check Provider') void checkProvider();
     else if (choice === 'Show Log') output.show(true);
+    else if (choice === 'Open Settings') {
+      void vscode.commands.executeCommand(
+        'workbench.action.openSettings',
+        'vulnGuard.localModel',
+      );
+    }
   });
 }

@@ -29,6 +29,7 @@
     "onCommand:vulnGuard.setApiKey",
     "onCommand:vulnGuard.clearApiKey",
     "onCommand:vulnGuard.checkProvider",
+    "onCommand:vulnGuard.checkLocalModel",
     "onCommand:vulnGuard.showReport"
   ],
   "contributes": {
@@ -56,6 +57,10 @@
       {
         "command": "vulnGuard.checkProvider",
         "title": "VulnGuard: Check AI Provider"
+      },
+      {
+        "command": "vulnGuard.checkLocalModel",
+        "title": "VulnGuard: Check Local Model"
       },
       {
         "command": "vulnGuard.showReport",
@@ -138,6 +143,42 @@
           "minimum": 1,
           "description": "Safety cap on how many functions a single file may send."
         },
+        "vulnGuard.localModel.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Run a local ONNX CodeBERT classifier to triage functions before AI verification. Requires a model exported by `ml/kaggle/export_onnx.py` and `npm install onnxruntime-node` in the extension folder. The model never creates findings on its own; it only proposes functions for the AI verifier."
+        },
+        "vulnGuard.localModel.path": {
+          "type": "string",
+          "default": "",
+          "description": "Directory containing model.onnx, vocab.json and merges.txt."
+        },
+        "vulnGuard.localModel.threshold": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "P(vulnerable) above which a function no rule flagged is sent to the AI verifier."
+        },
+        "vulnGuard.localModel.maxChunks": {
+          "type": "number",
+          "default": 40,
+          "minimum": 1,
+          "description": "Maximum functions the local model scores per file."
+        },
+        "vulnGuard.localModel.workers": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 4,
+          "description": "Worker threads used for inference."
+        },
+        "vulnGuard.localModel.timeoutMs": {
+          "type": "number",
+          "default": 10000,
+          "minimum": 500,
+          "description": "Per-function inference timeout. A timed-out worker is replaced."
+        },
         "vulnGuard.ollama.baseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:11434",
@@ -170,6 +211,7 @@
     "check": "npm run typecheck && npm run test",
     "eval": "node eval/extract-labels.mjs && npm run compile && node dist/eval.js",
     "eval:ai": "node eval/extract-labels.mjs && npm run compile && node dist/eval.js --modes rules,ollama,deep",
+    "eval:model": "node eval/extract-labels.mjs && npm run compile && node dist/eval-model.js",
     "eval:labels": "node eval/extract-labels.mjs",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package"

@@ -35,6 +35,73 @@ describe('buildCandidates', () => {
     expect(candidate.request.code.startsWith('def bad():')).toBe(true);
   });
 
+  it('adds functions the local model flags, above the threshold', () => {
+    const triage = new Map([
+      [2, 0.81],
+      [5, 0.2],
+    ]);
+
+    const candidates = buildCandidates({
+      chunks,
+      hits,
+      deep: false,
+      max: 10,
+      triage,
+      triageThreshold: 0.6,
+    });
+
+    expect(candidates.map((candidate) => candidate.request.functionName)).toEqual(['safe', 'bad']);
+    expect(candidates[0].request.ruleHints).toEqual([]);
+  });
+
+  it('leaves an unflagged function out below the threshold', () => {
+    const candidates = buildCandidates({
+      chunks,
+      hits,
+      deep: false,
+      max: 10,
+      triage: new Map([[2, 0.4]]),
+      triageThreshold: 0.6,
+    });
+
+    expect(candidates.map((candidate) => candidate.request.functionName)).toEqual(['bad']);
+  });
+
+  it('spends the request budget on rule hits before model hits', () => {
+    const source = [
+      'def first():',
+      '    return os.getcwd()',
+      '',
+      'def second():',
+      '    return os.getcwd()',
+      '',
+      'def third():',
+      '    return hashlib.md5(b"x")',
+    ].join('\n');
+
+    const localChunks = chunkPython(source);
+    const localHits = scanPython(source);
+    const third = localChunks.find((chunk) => chunk.name === 'third');
+    const first = localChunks.find((chunk) => chunk.name === 'first');
+    const second = localChunks.find((chunk) => chunk.name === 'second');
+    expect(third && first && second).toBeTruthy();
+
+    const candidates = buildCandidates({
+      chunks: localChunks,
+      hits: localHits,
+      deep: false,
+      max: 2,
+      triage: new Map([
+        [first!.startLine, 0.99],
+        [second!.startLine, 0.98],
+        [third!.startLine, 0.1],
+      ]),
+      triageThreshold: 0.6,
+    });
+
+    expect(candidates.map((candidate) => candidate.request.functionName)).toEqual(['first', 'third']);
+  });
+
   it('sends every long-enough chunk in deep mode', () => {
     const candidates = buildCandidates({ chunks, hits: [], deep: true, max: 10 });
     const names = candidates.map((candidate) => candidate.request.functionName);
