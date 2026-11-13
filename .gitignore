@@ -4,7 +4,8 @@ dist/
 .vscode-test/
 coverage/
 ml/out/
-ml/data/
+ml/data/*/
+ml/data/*.jsonl
 *.onnx
 __pycache__/
 .venv/
