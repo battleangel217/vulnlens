@@ -136,6 +136,15 @@ def main() -> int:
     # implementation reads vocab.json/merges.txt directly.
     tokenizer.save_pretrained(args.out)
 
+    missing = [name for name in ("vocab.json", "merges.txt") if not (args.out / name).exists()]
+    if missing:
+        print(
+            f"error: tokenizer did not write {missing}. The extension requires both "
+            "files; pass a checkpoint saved with the slow CodeBERT tokenizer.",
+            file=sys.stderr,
+        )
+        return 1
+
     labels = []
     for index in range(model.config.num_labels):
         # config JSON round-trips keys as strings; normalise before lookup.
