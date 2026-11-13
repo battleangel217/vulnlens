@@ -116,6 +116,14 @@ def main() -> int:
         print(f"No checkpoint at {args.checkpoint}", file=sys.stderr)
         return 1
 
+    if not (args.checkpoint / "config.json").exists():
+        print(
+            f"{args.checkpoint} has no config.json — training did not finish. "
+            "Check the fine-tune cell for an error before exporting.",
+            file=sys.stderr,
+        )
+        return 1
+
     args.out.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading {args.checkpoint}")

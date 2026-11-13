@@ -80,10 +80,26 @@ def parse_args() -> argparse.Namespace:
 # --------------------------------------------------------------------------
 
 
+def as_scores(scores: Sequence[float]) -> np.ndarray:
+    """Validate that we have one probability per row.
+
+    A two-class head returns shape (N, 2). Passing that through produces the
+    unhelpful "operands could not be broadcast together with shapes (N,2) (N,)"
+    error, so fail with an explanation instead.
+    """
+    s = np.asarray(scores, dtype=np.float64)
+    if s.ndim != 1:
+        raise ValueError(
+            f"expected one score per row, got shape {s.shape}. "
+            "Take the vulnerable-class probability in evaluate()."
+        )
+    return s
+
+
 def recall_at_fpr(labels: Sequence[int], scores: Sequence[float], max_fpr: float) -> float:
     """Recall at the largest threshold whose false-positive rate is <= max_fpr."""
     y = np.asarray(labels, dtype=np.int64)
-    s = np.asarray(scores, dtype=np.float64)
+    s = as_scores(scores)
     positives = y == 1
     negatives = ~positives
     if positives.sum() == 0 or negatives.sum() == 0:
@@ -102,7 +118,7 @@ def recall_at_fpr(labels: Sequence[int], scores: Sequence[float], max_fpr: float
 
 def threshold_metrics(labels: Sequence[int], scores: Sequence[float], threshold: float) -> dict[str, Any]:
     y = np.asarray(labels, dtype=np.int64)
-    s = np.asarray(scores, dtype=np.float64)
+    s = as_scores(scores)
     predicted = s >= threshold
     tp = int(np.sum(predicted & (y == 1)))
     fp = int(np.sum(predicted & (y == 0)))
@@ -137,7 +153,7 @@ def choose_threshold(
     back to the lowest observed score so nothing is silently dropped.
     """
     y = np.asarray(labels, dtype=np.int64)
-    s = np.asarray(scores, dtype=np.float64)
+    s = as_scores(scores)
     if len(s) == 0:
         return 0.5
 
@@ -158,7 +174,7 @@ def summarise(labels: Sequence[int], scores: Sequence[float], min_recall: float)
     from sklearn.metrics import average_precision_score, roc_auc_score
 
     y = np.asarray(labels, dtype=np.int64)
-    s = np.asarray(scores, dtype=np.float64)
+    s = as_scores(scores)
     threshold = choose_threshold(y, s, min_recall)
 
     result: dict[str, Any] = {
@@ -266,7 +282,15 @@ def evaluate(model: Any, loader: Any, device: Any, fp16: bool) -> tuple[list[flo
             batch = {key: value.to(device) for key, value in batch.items()}
             with autocast(fp16):
                 logits = model(**batch).logits
-            scores.extend(torch.sigmoid(logits.float()).cpu().tolist())
+
+            logits = logits.float()
+            if logits.ndim == 2 and logits.shape[-1] == 2:
+                # Head is [safe, vulnerable]; the extension takes softmax[1].
+                probabilities = torch.softmax(logits, dim=-1)[:, 1]
+            else:
+                probabilities = torch.sigmoid(logits.reshape(-1))
+
+            scores.extend(probabilities.cpu().tolist())
 
     return scores, labels
 
