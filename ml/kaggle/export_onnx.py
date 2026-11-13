@@ -58,7 +58,17 @@ def parse_args() -> argparse.Namespace:
         "--tolerance",
         type=float,
         default=1e-3,
-        help="Max absolute logit drift allowed when validating the export (default: 1e-3).",
+        help="Max absolute logit drift allowed for the fp32 export (default: 1e-3).",
+    )
+    parser.add_argument(
+        "--quantize-tolerance",
+        type=float,
+        default=2e-2,
+        help=(
+            "Max absolute logit drift allowed for the int8 export (default: 2e-2). "
+            "Dynamic quantization perturbs weights by design, so the fp32 tolerance "
+            "would always report a false failure."
+        ),
     )
     return parser.parse_args()
 
@@ -284,7 +294,7 @@ def main() -> int:
                 input_ids.numpy().astype(np.int64),
                 attention_mask.numpy().astype(np.int64),
             )
-            drift.append(check_drift(reference, q_out, args.tolerance, "int8 export"))
+            drift.append(check_drift(reference, q_out, args.quantize_tolerance, "int8 export"))
         except ImportError:
             pass
     else:
