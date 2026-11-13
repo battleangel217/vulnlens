@@ -37,7 +37,17 @@ save ──▶ 6 CWE rules (offline, ~5ms) ──▶ diagnostics appear immediat
 | CWE-798 | Hardcoded credentials (literals, AWS keys, private keys, JWTs) | high |
 | CWE-327 | Weak cryptography (MD5, SHA-1, DES, legacy TLS) | medium |
 
-## Quick start
+## Install
+
+From the packaged VSIX:
+
+```bash
+code --install-extension vuln-lens-0.2.0.vsix
+```
+
+Or open the Extensions view, click `...`, and choose **Install from VSIX…**.
+
+## Quick start (from source)
 
 ```bash
 npm install
@@ -47,7 +57,7 @@ npm run compile
 Press **F5**, open `demo/orders_api.py`, and save. Four findings appear with no
 network access at all. Then pick an AI backend:
 
-### Option A — local model (recommended, nothing leaves the machine)
+### Option A — Ollama (local LLM, nothing leaves the machine)
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
