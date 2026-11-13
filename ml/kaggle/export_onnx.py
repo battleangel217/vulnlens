@@ -146,18 +146,19 @@ def main() -> int:
 
     missing = [name for name in ("vocab.json", "merges.txt") if not (args.out / name).exists()]
     if missing:
-        # A fast tokenizer writes tokenizer.json but not the slow vocabulary
-        # files. The extension's BPE reader needs vocab.json/merges.txt, so
-        # source them from the base tokenizer instead of failing the export.
+        # A fast tokenizer writes tokenizer.json but not always the slow
+        # vocabulary files. Copy the exact files from the base repository
+        # instead of relying on tokenizer.save_vocabulary naming.
         try:
-            from transformers import RobertaTokenizer
+            from huggingface_hub import hf_hub_download
 
-            slow = RobertaTokenizer.from_pretrained(args.tokenizer)
-            slow.save_vocabulary(str(args.out))
+            for name in missing:
+                source = hf_hub_download(repo_id=args.tokenizer, filename=name)
+                shutil.copyfile(source, args.out / name)
         except Exception as error:  # noqa: BLE001 - report the real reason
             print(
-                f"error: tokenizer did not write {missing}, and loading "
-                f"{args.tokenizer} failed: {error}",
+                f"error: tokenizer did not write {missing}, and fetching them "
+                f"from {args.tokenizer} failed: {error}",
                 file=sys.stderr,
             )
             return 1
