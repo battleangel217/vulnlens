@@ -1,0 +1,86 @@
+{
+  "name": "vuln-guard",
+  "displayName": "VulnGuard",
+  "description": "Flags vulnerable Python code in the editor. Deterministic rules today, LLM verdicts and a fine-tuned local model next.",
+  "version": "0.1.0",
+  "publisher": "battleangel",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "security",
+    "sast",
+    "vulnerability",
+    "python",
+    "cwe"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:python"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vulnGuard.scanFile",
+        "title": "VulnGuard: Scan Current File"
+      },
+      {
+        "command": "vulnGuard.clearDiagnostics",
+        "title": "VulnGuard: Clear Findings"
+      }
+    ],
+    "configuration": {
+      "title": "VulnGuard",
+      "properties": {
+        "vulnGuard.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable VulnGuard scanning."
+        },
+        "vulnGuard.scanOnOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Scan Python files when they are opened."
+        },
+        "vulnGuard.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Scan Python files when they are saved."
+        },
+        "vulnGuard.minSeverity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ],
+          "default": "low",
+          "description": "Hide findings below this severity."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run test",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

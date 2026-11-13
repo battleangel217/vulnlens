@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.vsix
+.vscode-test/
+coverage/
+ml/out/
+ml/data/
+*.onnx
+__pycache__/
+.venv/
