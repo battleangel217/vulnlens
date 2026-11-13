@@ -84,6 +84,65 @@ export function sweep(files: readonly ModelFile[], thresholds: readonly number[]
   return [...thresholds].sort((a, b) => a - b).map((threshold) => evaluateThreshold(files, threshold));
 }
 
+/** Linear-interpolated quantile of an ascending array (numpy's default). */
+export function quantile(sorted: readonly number[], q: number): number {
+  if (sorted.length === 0) return 0;
+  const position = (sorted.length - 1) * Math.min(1, Math.max(0, q));
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  if (lower === upper) return sorted[lower];
+  const weight = position - lower;
+  return sorted[lower] * (1 - weight) + sorted[upper] * weight;
+}
+
+export interface ScoreDistribution {
+  readonly category: 'vulnerable' | 'clean';
+  readonly files: number;
+  readonly min: number;
+  readonly median: number;
+  readonly max: number;
+}
+
+/**
+ * Per-category spread of file scores. A model whose whole range sits below the
+ * fixed sweep grid can look like "zero at every threshold" while still ranking
+ * a little; showing the range makes that difference visible.
+ */
+export function scoreDistribution(files: readonly ModelFile[]): ScoreDistribution[] {
+  return (['vulnerable', 'clean'] as const).map((category) => {
+    const scores = files
+      .filter((file) => file.category === category)
+      .map((file) => fileProbability(file.chunks))
+      .sort((a, b) => a - b);
+    if (scores.length === 0) {
+      return { category, files: 0, min: 0, median: 0, max: 0 };
+    }
+    return {
+      category,
+      files: scores.length,
+      min: scores[0],
+      median: quantile(scores, 0.5),
+      max: scores[scores.length - 1],
+    };
+  });
+}
+
+/**
+ * Thresholds drawn from the model's own chunk-score quantiles. Fixed grids
+ * (0.1..0.9) are useful for a calibrated model but miss a model whose scores
+ * are all near the base rate.
+ */
+export function scoreQuantileThresholds(
+  files: readonly ModelFile[],
+  quantiles: readonly number[] = [0.5, 0.75, 0.9, 0.95, 0.99],
+): number[] {
+  const scores = files
+    .flatMap((file) => file.chunks.map((chunk) => chunk.probability))
+    .sort((a, b) => a - b);
+  if (scores.length === 0) return [];
+  return [...new Set(quantiles.map((q) => Number(quantile(scores, q).toFixed(5))))];
+}
+
 export function filePrecision(counts: FileCounts): number {
   const denominator = counts.tp + counts.fp;
   return denominator === 0 ? 1 : counts.tp / denominator;

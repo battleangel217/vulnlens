@@ -6,6 +6,9 @@ import {
   fileProbability,
   fileRecall,
   issueCovered,
+  quantile,
+  scoreDistribution,
+  scoreQuantileThresholds,
   sweep,
   type ModelFile,
 } from '../eval/model_score';
@@ -77,5 +80,38 @@ describe('file metrics', () => {
     expect(fileF1({ tp: 3, fp: 1, fn: 1, tn: 0 })).toBeCloseTo(0.75);
     expect(filePrecision({ tp: 0, fp: 0, fn: 0, tn: 4 })).toBe(1);
     expect(fileRecall({ tp: 0, fp: 0, fn: 0, tn: 4 })).toBe(1);
+  });
+});
+
+describe('quantile', () => {
+  it('interpolates like numpy', () => {
+    expect(quantile([1, 2, 3, 4], 0)).toBe(1);
+    expect(quantile([1, 2, 3, 4], 1)).toBe(4);
+    expect(quantile([1, 2, 3, 4], 0.5)).toBeCloseTo(2.5);
+    expect(quantile([1, 2, 3, 4], 0.25)).toBeCloseTo(1.75);
+    expect(quantile([], 0.5)).toBe(0);
+  });
+});
+
+describe('score distribution', () => {
+  const files = [
+    file('v1', 'vulnerable', [{ startLine: 0, endLine: 1, probability: 0.2 }]),
+    file('v2', 'vulnerable', [{ startLine: 0, endLine: 1, probability: 0.4 }]),
+    file('c1', 'clean', [{ startLine: 0, endLine: 1, probability: 0.1 }]),
+    file('c2', 'clean', [{ startLine: 0, endLine: 1, probability: 0.3 }]),
+  ];
+
+  it('summarises each category by file score', () => {
+    const [vulnerable, clean] = scoreDistribution(files);
+    expect(vulnerable).toMatchObject({ category: 'vulnerable', files: 2, min: 0.2, max: 0.4 });
+    expect(vulnerable.median).toBeCloseTo(0.3);
+    expect(clean).toMatchObject({ category: 'clean', files: 2, min: 0.1, max: 0.3 });
+    expect(clean.median).toBeCloseTo(0.2);
+  });
+
+  it('derives thresholds inside a compressed score range', () => {
+    const thresholds = scoreQuantileThresholds(files, [0.5, 1]);
+    expect(thresholds).toEqual([0.25, 0.4]);
+    expect(Math.max(...thresholds)).toBeLessThan(0.5);
   });
 });

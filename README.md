@@ -259,9 +259,35 @@ npm run eval:model -- --model /absolute/path/to/vuln-model
 It writes `eval/MODEL_RESULTS.md` and `eval/results/model.json`, reporting
 file-level precision/recall across a threshold sweep and, more importantly, how
 many labelled issues fall inside a function the model scored above the threshold.
+The sweep includes quantiles of the model's own scores, so a model whose range
+sits below 0.1 is still measured instead of showing an empty table.
 No model artifact is committed and `onnxruntime-node` is optional, so this
 command exits with a clear message when either is missing rather than printing
 invented numbers.
+
+### Measured result: PrimeVul → Python
+
+The full run used the complete PrimeVul corpus (175,797 train / 23,948
+validation / 24,788 test functions; 2.6% vulnerable) for 3 epochs.
+
+In-domain (C/C++, 24,647 test rows):
+
+| Metric | Value |
+|---|---|
+| PR-AUC | 0.069 (baseline 0.021) |
+| ROC-AUC | 0.808 |
+| Recall @ 0.5 | 0.0% |
+| Recall @ FPR 1% / 5% / 10% | 4.2% / 19.8% / 40.5% |
+
+On the 50-file Python corpus the model is effectively flat: every chunk scored
+between 0.00526 and 0.01534. At the best threshold (0.00537) it flags 22/28
+vulnerable files and 13/22 clean files, and covers 7/29 labelled issues. At a
+threshold high enough to avoid false positives it catches 2 of 28 files.
+
+The conclusion is negative and worth stating plainly: **a PrimeVul-trained
+CodeBERT does not transfer to Python.** Keep `vulnLens.localModel.enabled` off
+unless you train on Python data. The rule engine and the AI verifier are the
+parts that work.
 
 ### Current results (rules only)
 
@@ -344,9 +370,10 @@ The suite includes:
   but data crossing a function boundary or a class attribute is not.
 - **Rules are heuristics, AI is probabilistic.** A finding means "look here".
   A dismissal means "the model disagreed", not "proven safe".
-- **The local model is trained on C/C++.** It is a triage aid for Python, not a
-  Python vulnerability detector; its Python numbers are in `eval/MODEL_RESULTS.md`
-  when an artifact has been evaluated.
+- **The local model does not transfer to Python.** It is trained on PrimeVul
+  (C/C++) and scored every Python chunk between 0.005 and 0.015 in the full run;
+  see `eval/MODEL_RESULTS.md`. Local triage is off by default and should stay off
+  until it is trained on Python data.
 - **Python only.**
 
 ## Roadmap
@@ -356,11 +383,13 @@ The suite includes:
   deep scan. Rules are measured; AI rows need a local model or a key.
 - **M4** — CodeBERT fine-tuned on PrimeVul, exported to ONNX, run in a worker
   thread as a local high-recall triage step in front of the LLM. Training and
-  export scripts live in `ml/`; the artifact is intentionally not committed, and
-  Python transfer is measured by `npm run eval:model`.
-- **M5** — in-domain Python training data. PrimeVul is C/C++, so the first local
-  model is a baseline; Python vulnerability data (or a Python-specific encoder)
-  is the next honest improvement.
+  export scripts live in `ml/`; the artifact is intentionally not committed.
+  **Done, with a negative transfer result**: the model is weak on C/C++ and flat
+  on Python, so it stays off by default.
+- **M5** — in-domain Python training data. PrimeVul is C/C++, and the measured
+  transfer result confirms that a C/C++ model is not a Python detector. The next
+  honest improvement is a labelled Python corpus (or a Python-specific encoder),
+  evaluated with `npm run eval:model` before any threshold is advertised.
 
 ## License
 

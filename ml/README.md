@@ -109,8 +109,11 @@ Quick end-to-end smoke test (minutes, not a real model):
 ```
 
 The export verifies the ONNX graph against PyTorch logits and, when
-`onnxruntime` is present, checks the int8-quantized graph too. Any drift above
-`--tolerance` (default `1e-3`) is recorded in `model_card.json` and printed.
+`onnxruntime` is present, checks the int8-quantized graph too. Drift above the
+applicable bound — `--tolerance` for fp32 (default `1e-3`),
+`--quantize-tolerance` for int8 (default `2e-2`) — is recorded in
+`model_card.json` and printed. Dynamic quantization changes weights by design,
+so it gets its own, looser bound.
 
 Options:
 
@@ -162,6 +165,16 @@ different things:
 
 Threshold guidance for triage: prefer a lower threshold than the F1 optimum.
 A false negative is invisible; a false positive costs one bounded LLM request.
+
+### Measured transfer result
+
+The full PrimeVul run (3 epochs, 175,797 train rows) reached PR-AUC 0.069 and
+ROC-AUC 0.808 on the C/C++ test split. On the 50-file Python corpus, every chunk
+scored between 0.00526 and 0.01534. At the best threshold the model flagged
+22/28 vulnerable files and 13/22 clean files, covering 7/29 labelled issues; at
+a threshold with no false positives it caught 2/28. That is a negative transfer
+result, not a tuning problem. Do not enable local triage on Python until the
+model is trained on Python data.
 
 ## Honest limitations
 

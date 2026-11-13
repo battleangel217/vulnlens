@@ -520,10 +520,14 @@ async function checkLocalModel(): Promise<void> {
       return;
     }
 
+    const below = probability < config.threshold;
     const summary =
       `local model ready — ${pool.stats.workers} worker(s), ` +
-      `probe ${(probability * 100).toFixed(0)}% vulnerable in ${ms}ms, ` +
-      `threshold ${(config.threshold * 100).toFixed(0)}%`;
+      `probe ${(probability * 100).toFixed(1)}% vulnerable in ${ms}ms, ` +
+      `threshold ${(config.threshold * 100).toFixed(0)}%` +
+      (below
+        ? ' — probe is below the threshold, so this model will not nominate a known SQL-injection sample'
+        : '');
 
     output.appendLine(`[vuln-lens] ${summary}`);
     void vscode.window.showInformationMessage(`VulnLens: ${summary}`);

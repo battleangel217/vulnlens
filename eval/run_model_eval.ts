@@ -18,6 +18,8 @@ import {
   fileF1,
   filePrecision,
   fileRecall,
+  scoreDistribution,
+  scoreQuantileThresholds,
   sweep,
   type ModelFile,
   type ThresholdResult,
@@ -65,6 +67,11 @@ function parseArgs(argv: string[]): Options {
   return options;
 }
 
+function formatThreshold(value: number): string {
+  // Small scores need more digits; 0.00536 and 0.00540 must not look identical.
+  return value >= 0.01 ? value.toFixed(2) : value.toPrecision(3);
+}
+
 function markdown(options: Options, files: ModelFile[], results: ThresholdResult[]): string {
   const clean = files.filter((file) => file.category === 'clean').length;
   const issues = files.reduce((sum, file) => sum + file.issues.length, 0);
@@ -81,6 +88,29 @@ function markdown(options: Options, files: ModelFile[], results: ThresholdResult
     'File-level prediction uses the maximum chunk probability. Issue coverage counts a label as covered only when the chunk containing it scores at or above the threshold.',
     '',
   );
+
+  const distribution = scoreDistribution(files);
+  lines.push('## Score distribution', '');
+  lines.push('| Category | Files | Min | Median | Max |');
+  lines.push('|---|---|---|---|---|');
+  for (const row of distribution) {
+    lines.push(
+      `| ${row.category} | ${row.files} | ${row.min.toFixed(5)} | ${row.median.toFixed(5)} | ${row.max.toFixed(5)} |`,
+    );
+  }
+  lines.push('');
+
+  const chunkScores = files.flatMap((file) => file.chunks.map((chunk) => chunk.probability));
+  const highest = chunkScores.length > 0 ? Math.max(...chunkScores) : 0;
+  const lowestFixed = Math.min(...options.thresholds);
+  if (chunkScores.length > 0 && highest < lowestFixed) {
+    lines.push(
+      `Every chunk scored below **${lowestFixed.toFixed(2)}**, so the fixed threshold grid never fires. ` +
+        'The sweep also includes quantiles of this model\'s own scores; a flat row there is the honest result.',
+      '',
+    );
+  }
+
   lines.push('| Threshold | TP | FP | FN | TN | Precision | Recall | F1 | Issue coverage |');
   lines.push('|---|---|---|---|---|---|---|---|---|');
 
@@ -90,14 +120,14 @@ function markdown(options: Options, files: ModelFile[], results: ThresholdResult
         ? '—'
         : `${result.coveredIssues}/${result.totalIssues} (${percent(result.coveredIssues / result.totalIssues)})`;
     lines.push(
-      `| ${result.threshold.toFixed(2)} | ${result.files.tp} | ${result.files.fp} | ${result.files.fn} | ${result.files.tn} | ${percent(filePrecision(result.files))} | ${percent(fileRecall(result.files))} | ${percent(fileF1(result.files))} | ${coverage} |`,
+      `| ${formatThreshold(result.threshold)} | ${result.files.tp} | ${result.files.fp} | ${result.files.fn} | ${result.files.tn} | ${percent(filePrecision(result.files))} | ${percent(fileRecall(result.files))} | ${percent(fileF1(result.files))} | ${coverage} |`,
     );
   }
 
   if (best) {
     lines.push(
       '',
-      `Highest file-level F1: **${best.threshold.toFixed(2)}** (${percent(fileF1(best.files))}).`,
+      `Highest file-level F1: **${formatThreshold(best.threshold)}** (${percent(fileF1(best.files))}).`,
       'For triage, prefer a lower threshold than the F1 optimum: a missed function never reaches the verifier.',
     );
   }
@@ -172,11 +202,17 @@ async function main(): Promise<void> {
 
   process.stderr.write('\n');
 
-  const results = sweep(files, options.thresholds);
+  const thresholds = [
+    ...new Set([...options.thresholds, ...scoreQuantileThresholds(files)]),
+  ].sort((a, b) => a - b);
+  const results = sweep(files, thresholds);
   const output = markdown(options, files, results);
 
   mkdirSync(options.outDir, { recursive: true });
-  writeFileSync(join(options.outDir, 'model.json'), `${JSON.stringify({ options, files, results }, null, 2)}\n`);
+  writeFileSync(
+    join(options.outDir, 'model.json'),
+    `${JSON.stringify({ options, thresholds, files, results }, null, 2)}\n`,
+  );
   writeFileSync(join(process.cwd(), 'eval', 'MODEL_RESULTS.md'), output);
 
   process.stdout.write(output);
