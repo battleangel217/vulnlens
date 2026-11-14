@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+Documentation-only release. No behaviour change.
+
+- Recommend BYOK as the first path, with a worked Groq example. It needs no
+  model download and works on any machine; Ollama remains the private option.
+- Reorder the provider docs to match: own API key, Ollama, Copilot.
+- Update the Marketplace description to match the new order.
+
 ## 0.2.0
 
 First packaged release.

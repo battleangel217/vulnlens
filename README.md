@@ -19,7 +19,7 @@ save ──▶ 6 CWE rules (offline, ~5ms) ──▶ diagnostics appear immediat
                   └──▶ candidates ──▶ local CodeBERT triage (experimental, off)
                                             │ nominates extra functions
                                             ▼
-                                     Ollama / BYOK / Copilot
+                                     BYOK / Ollama / Copilot
                                                 │
                             confirms ──▶ severity + explanation + fix
                             rejects  ──▶ finding struck through as "false positive"
@@ -57,21 +57,40 @@ npm run compile
 Press **F5**, open `demo/orders_api.py`, and save. Four findings appear with no
 network access at all. Then pick an AI backend:
 
-### Option A — Ollama (local LLM, nothing leaves the machine)
+### Option A — your own API key (recommended)
+
+The shortest path: no model download, and it works on any machine. Use any
+OpenAI-compatible endpoint — OpenAI, Groq, Together, OpenRouter, Google AI
+Studio, LM Studio, llama.cpp.
+
+1. Point VulnLens at the endpoint. [Groq](https://console.groq.com) has a free
+   tier and is a good default:
+
+   ```json
+   {
+     "vulnLens.ai.mode": "byok",
+     "vulnLens.byok.baseUrl": "https://api.groq.com/openai/v1",
+     "vulnLens.byok.model": "llama-3.3-70b-versatile"
+   }
+   ```
+
+2. Run **VulnLens: Set API Key (BYOK)** and paste the key. It goes into the OS
+   keychain via `SecretStorage`, never into `settings.json`.
+3. Run **VulnLens: Check AI Provider** to confirm the endpoint and model.
+
+The function under review is sent to that endpoint. If that matters, use
+Option B instead.
+
+### Option B — Ollama (local, nothing leaves the machine)
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
-ollama pull qwen2.5-coder:7b
+ollama pull qwen2.5-coder:3b
 ```
 
-Set `vulnLens.ai.mode` to `ollama`, then run **VulnLens: Check AI Provider**.
-
-### Option B — your own API key
-
-Run **VulnLens: Set API Key (BYOK)**. The key goes into the OS keychain via
-`SecretStorage`, never into `settings.json`. Any OpenAI-compatible endpoint works
-(OpenAI, Groq, Together, OpenRouter, LM Studio, llama.cpp): point
-`vulnLens.byok.baseUrl` at it and set `vulnLens.byok.model`.
+Set `vulnLens.ai.mode` to `ollama`, set `vulnLens.ollama.model` to
+`qwen2.5-coder:3b`, and raise `vulnLens.ai.timeoutMs` to `120000` on a
+CPU-only machine. Then run **VulnLens: Check AI Provider**.
 
 ### Option C — GitHub Copilot
 
