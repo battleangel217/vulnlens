@@ -45,6 +45,39 @@ Visual Studio Marketplace needs a Microsoft account and a Personal Access Token
 4. Check the listing:
    <https://marketplace.visualstudio.com/items?itemName=battleangel.vuln-lens>
 
+## Open VSX (Code - OSS, VSCodium, Antigravity, Gitpod)
+
+Open VSX is a separate registry. Code - OSS and Google Antigravity read their
+gallery from `https://open-vsx.org/vscode/gallery`, so an extension that exists
+only on the Microsoft Marketplace will not appear in their search results. A
+locally installed VSIX still works, but it never auto-updates.
+
+### One-time setup
+
+1. Create an [Eclipse account](https://accounts.eclipse.org/user/register).
+   The **GitHub Username** field must be `battleangel217`, the same account used
+   to sign in to Open VSX.
+2. Sign in at [open-vsx.org](https://open-vsx.org) with GitHub, then open
+   **Profile** → **Log in with Eclipse** → **Show Publisher Agreement** and
+   accept it.
+3. Create a token at <https://open-vsx.org/user-settings/tokens>.
+4. Create the namespace, if it does not exist yet:
+
+   ```bash
+   npx ovsx create-namespace battleangel -p <token>
+   ```
+
+   If the namespace belongs to someone else, publish under the GitHub ID
+   instead (`battleangel217`) and change `publisher` in `package.json`.
+
+### Publish a version
+
+```bash
+npx ovsx publish vuln-lens-0.2.3.vsix -p <token>
+```
+
+Check the result at <https://open-vsx.org/extension/battleangel/vuln-lens>.
+
 ## Notes
 
 - The publisher ID is permanent. If `battleangel` is taken, change `publisher`
