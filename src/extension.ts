@@ -8,7 +8,7 @@ import {
   resetCopilotInstance,
   resolveProvider,
 } from './lm';
-import { describeError } from './lm/types';
+import { describeError, type ProviderStatus } from './lm/types';
 import { cleanFix, type LlmVerdict } from './lm/verdict';
 import { rewriteCandidate } from './lm/rewrite';
 import { localModelConfig, closePool, ensurePool, probeLocalModel, resetPool } from './ml/setup';
@@ -595,7 +595,13 @@ async function suggestRewrite(): Promise<void> {
     return;
   }
 
-  const status = await provider.status();
+  let status: ProviderStatus;
+  try {
+    status = await provider.status();
+  } catch (error) {
+    void vscode.window.showWarningMessage(`VulnLens: ${describeError(error)}`);
+    return;
+  }
   if (!status.available) {
     void vscode.window.showWarningMessage(`VulnLens: ${status.detail}`);
     return;
@@ -631,6 +637,10 @@ async function suggestRewrite(): Promise<void> {
     );
 
     const verdict = results[0]?.verdict;
+    if (controller.signal.aborted) {
+      output.appendLine('[vuln-lens] rewrite cancelled');
+      return;
+    }
     if (!verdict) {
       void vscode.window.showWarningMessage('VulnLens: no rewrite returned.');
       return;
