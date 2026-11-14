@@ -19,7 +19,7 @@ save ──▶ 6 CWE rules (offline, ~5ms) ──▶ diagnostics appear immediat
                   └──▶ candidates ──▶ local CodeBERT triage (experimental, off)
                                             │ nominates extra functions
                                             ▼
-                                     BYOK / Ollama / Copilot
+                                     BYOK / Copilot / Ollama
                                                 │
                             confirms ──▶ severity + explanation + fix
                             rejects  ──▶ finding struck through as "false positive"
@@ -79,9 +79,16 @@ Studio, LM Studio, llama.cpp.
 3. Run **VulnLens: Check AI Provider** to confirm the endpoint and model.
 
 The function under review is sent to that endpoint. If that matters, use
-Option B instead.
+Option C instead. Already have Copilot? Option B needs no key at all.
 
-### Option B — Ollama (local, nothing leaves the machine)
+### Option B — GitHub Copilot
+
+Set `vulnLens.ai.mode` to `copilot` and run **VulnLens: Analyze Current File
+with AI** once to grant consent. Requires the official **GitHub Copilot Chat**
+extension and a Copilot subscription. This does **not** work in `code-oss`
+builds, which ship without Copilot Chat — use A or C there.
+
+### Option C — Ollama (local, nothing leaves the machine)
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
@@ -91,13 +98,6 @@ ollama pull qwen2.5-coder:3b
 Set `vulnLens.ai.mode` to `ollama`, set `vulnLens.ollama.model` to
 `qwen2.5-coder:3b`, and raise `vulnLens.ai.timeoutMs` to `120000` on a
 CPU-only machine. Then run **VulnLens: Check AI Provider**.
-
-### Option C — GitHub Copilot
-
-Set `vulnLens.ai.mode` to `copilot` and run **VulnLens: Analyze Current File
-with AI** once to grant consent. Requires the official **GitHub Copilot Chat**
-extension and a Copilot subscription. This does **not** work in `code-oss`
-builds, which ship without Copilot Chat — use A or B there.
 
 ## What the AI layer does
 

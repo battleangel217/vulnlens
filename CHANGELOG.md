@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.2
+
+- **First-run provider picker.** Running an AI command while
+  `vulnLens.ai.mode` is `off` now offers *own API key / Copilot / Ollama /
+  settings* instead of sending the user to a settings key. Choosing *own API
+  key* prompts for the key immediately.
+- Promote GitHub Copilot to Option B in the docs. It is the fastest path for
+  people who already have Copilot Chat, and it needs no key.
+- Ollama is Option C: the privacy option, but the heaviest to set up.
+
 ## 0.2.1
 
 Documentation-only release. No behaviour change.

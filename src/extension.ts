@@ -145,13 +145,77 @@ function config(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration('vulnLens');
 }
 
-function scanActive(options: Parameters<typeof scanDocument>[1]): void {
+type ProviderChoice = 'byok' | 'copilot' | 'ollama' | 'settings';
+
+interface ProviderPick extends vscode.QuickPickItem {
+  readonly choice: ProviderChoice;
+}
+
+/**
+ * AI is off by default so nothing is sent anywhere without consent. That makes
+ * a dead end for a new user who runs an AI command: point them at a provider
+ * instead of at a settings key they have to find themselves.
+ */
+async function ensureAiConfigured(): Promise<boolean> {
+  if (aiMode() !== 'off') return true;
+
+  const pick = await vscode.window.showQuickPick<ProviderPick>(
+    [
+      {
+        label: '$(key) Use my own API key',
+        description: 'Groq, OpenAI, OpenRouter — any OpenAI-compatible endpoint',
+        choice: 'byok',
+      },
+      {
+        label: '$(github) Use GitHub Copilot',
+        description: 'No key needed if Copilot Chat is installed',
+        choice: 'copilot',
+      },
+      {
+        label: '$(server) Use Ollama',
+        description: 'Local model; nothing leaves the machine',
+        choice: 'ollama',
+      },
+      {
+        label: '$(gear) Open AI settings',
+        description: 'Choose a provider manually',
+        choice: 'settings',
+      },
+    ],
+    {
+      title: 'VulnLens: AI verification is off',
+      placeHolder: 'Pick a provider to run the AI step',
+    },
+  );
+
+  if (!pick) return false;
+  if (pick.choice === 'settings') {
+    await vscode.commands.executeCommand('workbench.action.openSettings', 'vulnLens.ai');
+    return false;
+  }
+
+  await config().update('ai.mode', pick.choice, vscode.ConfigurationTarget.Global);
+
+  if (pick.choice === 'byok' && !(await extensionContext.secrets.get(API_KEY_SECRET))) {
+    await setApiKey(false);
+    if (!(await extensionContext.secrets.get(API_KEY_SECRET))) {
+      // Cancelled: keep the picker reachable next time.
+      await config().update('ai.mode', 'off', vscode.ConfigurationTarget.Global);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function scanActive(options: Parameters<typeof scanDocument>[1]): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     void vscode.window.showInformationMessage('VulnLens: open a Python file first.');
     return;
   }
-  void scanDocument(editor.document, options);
+  if (options?.forceAi === true && !(await ensureAiConfigured())) return;
+  await scanDocument(editor.document, options);
 }
 
 /**
@@ -418,7 +482,7 @@ function updateStatusBar(): void {
     active > 0 ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined;
 }
 
-async function setApiKey(): Promise<void> {
+async function setApiKey(announce = true): Promise<void> {
   const value = await vscode.window.showInputBox({
     title: 'VulnLens: API key',
     prompt: 'Key for your OpenAI-compatible endpoint. Stored in the OS keychain, never in settings.',
@@ -432,6 +496,8 @@ async function setApiKey(): Promise<void> {
 
   await extensionContext.secrets.store(API_KEY_SECRET, value.trim());
   warned.clear();
+
+  if (!announce) return;
 
   const choice = await vscode.window.showInformationMessage(
     'VulnLens: API key stored.',
@@ -575,18 +641,9 @@ async function suggestRewrite(): Promise<void> {
     return;
   }
 
-  const mode = aiMode();
-  if (mode === 'off') {
-    const choice = await vscode.window.showWarningMessage(
-      'VulnLens: AI is off. Set vulnLens.ai.mode to ollama, byok, or copilot.',
-      'Open Settings',
-    );
-    if (choice === 'Open Settings') {
-      await vscode.commands.executeCommand('workbench.action.openSettings', 'vulnLens.ai');
-    }
-    return;
-  }
+  if (!(await ensureAiConfigured())) return;
 
+  const mode = aiMode();
   const provider = await resolveProvider(extensionContext.secrets, mode, true);
   if (!provider) {
     void vscode.window.showWarningMessage(

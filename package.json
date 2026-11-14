@@ -1,8 +1,8 @@
 {
   "name": "vuln-lens",
   "displayName": "VulnLens",
-  "description": "Security review for Python: deterministic CWE rules plus optional AI verification through your own API key, Ollama, or GitHub Copilot.",
-  "version": "0.2.1",
+  "description": "Security review for Python: deterministic CWE rules plus optional AI verification through your own API key, GitHub Copilot, or Ollama.",
+  "version": "0.2.2",
   "publisher": "battleangel",
   "license": "MIT",
   "icon": "assets/icon.png",

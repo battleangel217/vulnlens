@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<rect width="100%" height="100%" fill="#0b1220"/>
+<g font-family="DejaVu Sans, sans-serif">
+<text x="100" y="104" font-size="50" font-weight="bold" fill="#f1f5f9">CodeBERT on Python: every file in one narrow band</text>
+<text x="100" y="156" font-size="27" fill="#94a3b8">PrimeVul-trained model, 50-file Python corpus · 28 vulnerable · 22 clean · file score = highest function score</text>
+<line x1="290" y1="410" x2="1480" y2="410" stroke="#1e293b" stroke-width="2"/>
+<text x="262" y="400" font-size="30" font-weight="bold" fill="#fb923c" text-anchor="end">vulnerable</text>
+<text x="262" y="438" font-size="23" fill="#64748b" text-anchor="end">28 files</text>
+<line x1="290" y1="610" x2="1480" y2="610" stroke="#1e293b" stroke-width="2"/>
+<text x="262" y="600" font-size="30" font-weight="bold" fill="#22d3ee" text-anchor="end">clean</text>
+<text x="262" y="638" font-size="23" fill="#64748b" text-anchor="end">22 files</text>
+<circle cx="332.2" cy="518.0" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="329.2" cy="564.0" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="331.9" cy="610.0" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="333.6" cy="656.0" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="328.8" cy="702.0" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="330.8" cy="554.8" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="334.6" cy="600.8" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="334.3" cy="646.8" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="330.1" cy="692.8" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="328.1" cy="545.6" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="326.6" cy="591.6" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="332.9" cy="637.6" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="340.6" cy="683.6" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="327.1" cy="536.4" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="329.3" cy="582.4" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="334.3" cy="628.4" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="328.9" cy="674.4" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="700.3" cy="527.2" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="325.0" cy="573.2" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="389.7" cy="619.2" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="339.3" cy="465.2" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="1408.8" cy="318.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="335.5" cy="364.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="339.7" cy="410.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="335.5" cy="456.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="330.3" cy="502.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="331.5" cy="354.8" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="345.0" cy="400.8" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="333.7" cy="646.8" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="326.9" cy="692.8" r="10" fill="#22d3ee" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="336.9" cy="345.6" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="328.8" cy="391.6" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="332.2" cy="437.6" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="330.5" cy="483.6" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="336.8" cy="336.4" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="345.5" cy="382.4" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="332.7" cy="428.4" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="1408.8" cy="474.4" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="455.9" cy="327.2" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="325.8" cy="373.2" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="389.1" cy="419.2" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="325.3" cy="465.2" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="326.3" cy="318.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="333.2" cy="364.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="333.5" cy="410.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="336.3" cy="456.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="318.5" cy="502.0" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="332.7" cy="354.8" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="327.3" cy="400.8" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<circle cx="938.9" cy="446.8" r="10" fill="#fb923c" fill-opacity="0.85" stroke="#0b1220" stroke-width="2"/>
+<line x1="330.0" y1="300" x2="330.0" y2="720" stroke="#f43f5e" stroke-width="3" stroke-dasharray="10 8"/>
+<text x="344.0" y="286" font-size="23" fill="#fda4af">best F1 threshold 0.00537</text>
+<line x1="290" y1="730" x2="1480" y2="730" stroke="#334155" stroke-width="2"/>
+<line x1="290.0" y1="730" x2="290.0" y2="740" stroke="#334155" stroke-width="2"/>
+<text x="290.0" y="772" font-size="23" fill="#64748b" text-anchor="middle">0.0050</text>
+<line x1="560.5" y1="730" x2="560.5" y2="740" stroke="#334155" stroke-width="2"/>
+<text x="560.5" y="772" font-size="23" fill="#64748b" text-anchor="middle">0.0075</text>
+<line x1="830.9" y1="730" x2="830.9" y2="740" stroke="#334155" stroke-width="2"/>
+<text x="830.9" y="772" font-size="23" fill="#64748b" text-anchor="middle">0.0100</text>
+<line x1="1101.4" y1="730" x2="1101.4" y2="740" stroke="#334155" stroke-width="2"/>
+<text x="1101.4" y="772" font-size="23" fill="#64748b" text-anchor="middle">0.0125</text>
+<line x1="1371.8" y1="730" x2="1371.8" y2="740" stroke="#334155" stroke-width="2"/>
+<text x="1371.8" y="772" font-size="23" fill="#64748b" text-anchor="middle">0.0150</text>
+<text x="1480" y="812" font-size="22" fill="#475569" text-anchor="end">P(vulnerable)</text>
+<text x="100" y="848" font-size="24" fill="#cbd5e1">At a zero-false-positive threshold (0.02) the model catches 2 of 28 vulnerable files and covers 0 of 29 labelled issues.</text>
+<text x="100" y="882" font-size="20" fill="#475569">eval/MODEL_RESULTS.md · github.com/battleangel217/vulnlens</text>
+</g></svg>
