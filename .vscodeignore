@@ -15,3 +15,4 @@ vitest.config.*
 dist/eval*.js
 *.vsix
 assets/*.svg
+PUBLISHING.md
