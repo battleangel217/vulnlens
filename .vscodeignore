@@ -16,3 +16,5 @@ dist/eval*.js
 *.vsix
 assets/*.svg
 PUBLISHING.md
+publisher/**
+marketing/**
