@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+- Document the first-run provider picker on the Marketplace page: what it
+  offers, that it prompts for the key when BYOK is chosen, and that cancelling
+  returns the mode to `off`. Documentation only; no behaviour change.
+
 ## 0.2.2
 
 - **First-run provider picker.** Running an AI command while

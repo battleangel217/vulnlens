@@ -112,6 +112,12 @@ CPU-only machine. Then run **VulnLens: Check AI Provider**.
 - **Finds what the rules missed** in the same function, added as separate
   findings with an `AI` badge.
 
+AI is off by default, so nothing is sent anywhere until you choose. The first
+time you run an AI command, VulnLens shows a provider picker — *own API key /
+Copilot / Ollama / settings* — and prompts for the key immediately if you pick
+BYOK. If you cancel the key prompt, the mode goes back to `off` so the picker is
+there next time.
+
 ### Suggest a secure rewrite
 
 The fix above appears when the AI verifies a rule finding. To rewrite a function
