@@ -14,3 +14,4 @@ vitest.config.*
 .gitignore
 dist/eval*.js
 *.vsix
+assets/*.svg

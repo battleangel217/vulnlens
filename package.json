@@ -5,6 +5,7 @@
   "version": "0.2.0",
   "publisher": "battleangel",
   "license": "MIT",
+  "icon": "assets/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/battleangel217/vulnlens.git"
@@ -40,6 +41,7 @@
     "onCommand:vulnLens.clearApiKey",
     "onCommand:vulnLens.checkProvider",
     "onCommand:vulnLens.checkLocalModel",
+    "onCommand:vulnLens.suggestFix",
     "onCommand:vulnLens.showReport"
   ],
   "contributes": {
@@ -73,10 +75,23 @@
         "title": "VulnLens: Check Local Model"
       },
       {
+        "command": "vulnLens.suggestFix",
+        "title": "VulnLens: Suggest Secure Rewrite"
+      },
+      {
         "command": "vulnLens.showReport",
         "title": "VulnLens: Show Report"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vulnLens.suggestFix",
+          "when": "editorLangId == python",
+          "group": "navigation@9"
+        }
+      ]
+    },
     "configuration": {
       "title": "VulnLens",
       "properties": {

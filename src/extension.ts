@@ -9,7 +9,8 @@ import {
   resolveProvider,
 } from './lm';
 import { describeError } from './lm/types';
-import type { LlmVerdict } from './lm/verdict';
+import { cleanFix, type LlmVerdict } from './lm/verdict';
+import { rewriteCandidate } from './lm/rewrite';
 import { localModelConfig, closePool, ensurePool, probeLocalModel, resetPool } from './ml/setup';
 import { triageChunks } from './ml/triage';
 import { chunkPython } from './scan/chunker';
@@ -84,6 +85,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('vulnLens.checkProvider', () => checkProvider()),
 
     vscode.commands.registerCommand('vulnLens.checkLocalModel', () => checkLocalModel()),
+
+    vscode.commands.registerCommand('vulnLens.suggestFix', () => suggestRewrite()),
 
     vscode.commands.registerCommand('vulnLens.showReport', () => writeReport()),
 
@@ -535,6 +538,150 @@ async function checkLocalModel(): Promise<void> {
     const message = error instanceof Error ? error.message : String(error);
     output.appendLine(`[vuln-lens] local model probe failed: ${message}`);
     void vscode.window.showWarningMessage(`VulnLens: local model probe failed — ${message}`);
+  }
+}
+
+/** A rewrite must look like a whole definition, never a bare fragment. */
+const DEFINITION_RE = /\b(?:def|class)\s+[A-Za-z_]\w*/;
+
+function rangeForChunk(
+  document: vscode.TextDocument,
+  startLine: number,
+  endLine: number,
+): vscode.Range {
+  const last = Math.max(0, document.lineCount - 1);
+  const start = Math.min(startLine, last);
+  const end = Math.min(Math.max(endLine, start), last);
+  return new vscode.Range(start, 0, end, document.lineAt(end).text.length);
+}
+
+/**
+ * Ask the configured provider for a secure rewrite of the function under the
+ * cursor. This is the proactive counterpart to the quick fix: it does not wait
+ * for a rule to fire, so it can suggest a safer shape for code the heuristics
+ * did not flag.
+ */
+async function suggestRewrite(): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== LANGUAGE_ID) {
+    void vscode.window.showWarningMessage('VulnLens: open a Python file first.');
+    return;
+  }
+
+  const document = editor.document;
+  const source = document.getText();
+  if (source.length > MAX_FILE_BYTES) {
+    void vscode.window.showWarningMessage('VulnLens: file is too large to rewrite.');
+    return;
+  }
+
+  const mode = aiMode();
+  if (mode === 'off') {
+    const choice = await vscode.window.showWarningMessage(
+      'VulnLens: AI is off. Set vulnLens.ai.mode to ollama, byok, or copilot.',
+      'Open Settings',
+    );
+    if (choice === 'Open Settings') {
+      await vscode.commands.executeCommand('workbench.action.openSettings', 'vulnLens.ai');
+    }
+    return;
+  }
+
+  const provider = await resolveProvider(extensionContext.secrets, mode, true);
+  if (!provider) {
+    void vscode.window.showWarningMessage(
+      'VulnLens: no AI provider is configured. Run "VulnLens: Check AI Provider".',
+    );
+    return;
+  }
+
+  const status = await provider.status();
+  if (!status.available) {
+    void vscode.window.showWarningMessage(`VulnLens: ${status.detail}`);
+    return;
+  }
+
+  const candidate = rewriteCandidate(source, editor.selection.active.line);
+  if (!candidate) {
+    void vscode.window.showWarningMessage(
+      'VulnLens: put the cursor inside a function (and keep it under 12,000 characters).',
+    );
+    return;
+  }
+
+  const controller = new AbortController();
+  statusBar.text = '$(sync~spin) VulnLens: requesting rewrite';
+
+  try {
+    const results = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `VulnLens: rewriting ${candidate.request.functionName}`,
+        cancellable: true,
+      },
+      (_progress, token) => {
+        token.onCancellationRequested(() => controller.abort());
+        return analyzeCandidates([candidate], provider, {
+          concurrency: 1,
+          timeoutMs: config().get<number>('ai.timeoutMs', 25_000),
+          signal: controller.signal,
+          cache: verdictCache,
+        });
+      },
+    );
+
+    const verdict = results[0]?.verdict;
+    if (!verdict) {
+      void vscode.window.showWarningMessage('VulnLens: no rewrite returned.');
+      return;
+    }
+
+    const fix = cleanFix(verdict.fix);
+    if (!fix || !DEFINITION_RE.test(fix)) {
+      void vscode.window.showInformationMessage(
+        verdict.verdict === 'safe'
+          ? `VulnLens: no exploitable issue found in ${candidate.request.functionName}.`
+          : `VulnLens: ${candidate.request.functionName} looks vulnerable, but the model returned no complete function. ${verdict.reason}`,
+      );
+      return;
+    }
+
+    const preview = await vscode.workspace.openTextDocument({ language: 'python', content: fix });
+    await vscode.window.showTextDocument(preview, {
+      preview: true,
+      viewColumn: vscode.ViewColumn.Beside,
+    });
+
+    const choice = await vscode.window.showInformationMessage(
+      `VulnLens: suggested rewrite for ${candidate.request.functionName}. ${verdict.reason}`,
+      'Apply',
+      'Dismiss',
+    );
+    if (choice !== 'Apply') return;
+
+    const range = rangeForChunk(document, candidate.startLine, candidate.endLine);
+    if (document.getText(range) !== candidate.request.code) {
+      void vscode.window.showWarningMessage(
+        'VulnLens: the function changed while the rewrite was being generated. Run it again.',
+      );
+      return;
+    }
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(document.uri, range, fix);
+    if (!(await vscode.workspace.applyEdit(edit))) {
+      void vscode.window.showWarningMessage('VulnLens: could not apply the rewrite.');
+    }
+  } catch (error) {
+    const message = describeError(error);
+    if (message.toLowerCase().includes('abort')) {
+      output.appendLine('[vuln-lens] rewrite cancelled');
+    } else {
+      output.appendLine(`[vuln-lens] rewrite failed: ${message}`);
+      void vscode.window.showWarningMessage(`VulnLens: rewrite failed — ${message}`);
+    }
+  } finally {
+    updateStatusBar();
   }
 }
 

@@ -93,6 +93,15 @@ builds, which ship without Copilot Chat — use A or B there.
 - **Finds what the rules missed** in the same function, added as separate
   findings with an `AI` badge.
 
+### Suggest a secure rewrite
+
+The fix above appears when the AI verifies a rule finding. To rewrite a function
+the rules did not flag, put the cursor inside it and run **VulnLens: Suggest
+Secure Rewrite** (also in the editor context menu). The model receives the
+function plus any rule hints inside it, returns a complete replacement, and
+VulnLens opens it in a side-by-side preview before asking whether to apply it.
+If the function is already safe, it says so and changes nothing.
+
 Requests are bounded: one function per call, default concurrency 2, 25s timeout,
 `vulnLens.ai.maxChunks` per file (40), and a content-addressed cache so an
 unchanged function is never billed twice. Cancelling a scan aborts in-flight
@@ -144,6 +153,7 @@ Training and export happen on Kaggle, not here: `ml/data/prepare_primevul.py`,
 |---|---|
 | `VulnLens: Scan Current File` | Rules only, instant |
 | `VulnLens: Analyze Current File with AI` | Rules + verification (honours `ai.deepScan`) |
+| `VulnLens: Suggest Secure Rewrite` | Rewrite the function under the cursor with AI and preview it |
 | `VulnLens: Check AI Provider` | Reachability, model presence, actionable fix |
 | `VulnLens: Check Local Model` | Load the ONNX artifact and score a probe function |
 | `VulnLens: Set API Key (BYOK)` | Store key in the OS keychain |

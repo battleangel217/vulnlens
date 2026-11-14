@@ -10,6 +10,8 @@ First packaged release.
   CWE-327, running on save with no network access.
 - AI verification through Ollama, any OpenAI-compatible BYOK endpoint, or GitHub
   Copilot (dormant unless selected).
+- `VulnLens: Suggest Secure Rewrite` for the function under the cursor, with a
+  side-by-side preview before the edit is applied.
 - Diagnostics, hover text, code actions, and a report command.
 - Evaluation harness over a 50-file Python corpus. Rules score 22 TP / 2 FP /
   7 FN (91.7% precision, 75.9% recall).
