@@ -46,13 +46,22 @@ const worker = {
   minify: !watch,
 };
 
+/** Headless CLI: same rules, no editor API. */
+const cli = {
+  ...shared,
+  entryPoints: ['src/cli.ts'],
+  outfile: 'dist/cli.js',
+  minify: false,
+  banner: { js: '#!/usr/bin/env node' },
+};
+
 if (watch) {
-  for (const options of [extension, worker, evaluator, modelEvaluator]) {
+  for (const options of [extension, worker, evaluator, modelEvaluator, cli]) {
     const context = await esbuild.context(options);
     await context.watch();
   }
 } else {
-  for (const options of [extension, worker, evaluator, modelEvaluator]) {
+  for (const options of [extension, worker, evaluator, modelEvaluator, cli]) {
     await esbuild.build(options);
   }
 }

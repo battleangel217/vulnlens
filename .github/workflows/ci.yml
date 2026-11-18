@@ -22,6 +22,12 @@ jobs:
       - run: npm ci
       - run: npm run check
 
+      - name: CLI smoke test
+        run: |
+          npm run compile
+          node dist/cli.js eval/labeled --format sarif --no-fail --output "$RUNNER_TEMP/vulnlens.sarif"
+          node -e "const s = require(process.env.RUNNER_TEMP + '/vulnlens.sarif'); if (s.version !== '2.1.0' || s.runs[0].results.length === 0) process.exit(1)"
+
       - name: Package the extension
         run: npx vsce package --allow-missing-repository
 

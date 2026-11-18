@@ -1,0 +1,59 @@
+name: VulnLens
+description: Deterministic CWE rules for Python, with SARIF output for GitHub code scanning
+author: battleangel217
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  paths:
+    description: Files or directories to scan, relative to the workspace
+    required: false
+    default: .
+  min-severity:
+    description: low, medium, high, or critical
+    required: false
+    default: low
+  upload-sarif:
+    description: Upload the report to GitHub code scanning
+    required: false
+    default: "true"
+
+outputs:
+  sarif-file:
+    description: Absolute path to the generated SARIF report
+    value: ${{ steps.scan.outputs.sarif }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - id: scan
+      shell: bash
+      env:
+        VULNLENS_PATHS: ${{ inputs.paths }}
+        VULNLENS_MIN_SEVERITY: ${{ inputs.min-severity }}
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_ACTION_PATH"
+        npm ci --no-audit --no-fund
+        npm run compile
+
+        cd "$GITHUB_WORKSPACE"
+        sarif="${RUNNER_TEMP}/vulnlens.sarif"
+        # VULNLENS_PATHS is intentionally unquoted so several paths can be passed.
+        node "$GITHUB_ACTION_PATH/dist/cli.js" $VULNLENS_PATHS \
+          --format sarif \
+          --min-severity "$VULNLENS_MIN_SEVERITY" \
+          --no-fail \
+          --output "$sarif"
+        echo "sarif=$sarif" >> "$GITHUB_OUTPUT"
+
+    - if: inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+        category: vulnlens

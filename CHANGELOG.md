@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+Headless CLI and code scanning.
+
+- **`vulnlens` CLI.** Scan files or directories with the same rules, no editor
+  and no AI layer. Text, JSON, and SARIF output, `--min-severity`,
+  `--no-suppressions`, and meaningful exit codes (`0` clean, `1` findings,
+  `2` usage error).
+- **SARIF 2.1.0** with rule metadata, CWE help links, and 1-based regions, ready
+  for `github/codeql-action/upload-sarif`.
+- **Composite GitHub Action** (`action.yml`). Runs the scanner on a checkout and
+  uploads the report to code scanning. Findings show up under *Security → Code
+  scanning alerts*.
+- CI smoke-tests the CLI and the SARIF output.
+
 ## 0.2.4
 
 Security and trust release.

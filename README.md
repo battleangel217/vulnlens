@@ -242,6 +242,52 @@ password = "..."  # vuln-ignore: CWE-798
 
 The Quick Fix *Ignore this finding* inserts the right comment for you.
 
+## Command line and CI
+
+The scanner is also a standalone CLI. It uses the same rules, no editor and no
+AI layer, so it runs in a terminal or a pipeline.
+
+```bash
+npm install && npm run compile
+node dist/cli.js src/
+node dist/cli.js src/ --min-severity high --format json
+node dist/cli.js . --format sarif --output vulnlens.sarif
+```
+
+Link it once if you want a `vulnlens` command:
+
+```bash
+npm link
+vulnlens app/
+```
+
+Exit codes: `0` clean, `1` findings, `2` usage or read error. `--no-fail`
+always exits `0`, which is what the GitHub Action uses so code scanning can
+report alerts without failing the build.
+
+### GitHub Action
+
+```yaml
+name: security
+on: [push, pull_request]
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  vulnlens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: battleangel217/vulnlens@v0.3.0
+        with:
+          paths: .
+          min-severity: medium
+```
+
+Findings appear under **Security → Code scanning alerts**, one alert per
+finding, with the CWE as a tag. Pin the tag: the action builds the CLI from the
+tagged source.
+
 ## How it is structured
 
 ```
@@ -252,6 +298,12 @@ src/
     python-syntax.ts       quote/bracket-aware argument parsing
     scanner.ts             dedupe, suppression, severity filter
     rules/python.ts        six pure CodeRule implementations
+  cli.ts                   headless entry: walk, scan, report, exit code
+  cli/
+    sarif.ts               SARIF 2.1.0 shaping for code scanning
+    format.ts              text/JSON reports and summaries
+  trust-policy.ts          settings a workspace may not override
+  settings.ts              config reads that honour Workspace Trust
   lm/
     verdict.ts             zod schema + tolerant JSON extraction
     prompt.ts              the prompt and its output contract
