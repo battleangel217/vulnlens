@@ -15,6 +15,7 @@ import { localModelConfig, closePool, ensurePool, probeLocalModel, resetPool } f
 import { triageChunks } from './ml/triage';
 import { chunkPython } from './scan/chunker';
 import { scanPython } from './scan/scanner';
+import { readSetting } from './settings';
 import { SEVERITY_ORDER, type Severity } from './types';
 import { registerCodeActions } from './ui/codeActions';
 import { registerHoverProvider } from './ui/hover';
@@ -268,7 +269,7 @@ async function scanDocument(
 
   const mode = aiMode();
   const wantAi =
-    mode !== 'off' && (options.forceAi === true || config().get<boolean>('ai.analyzeOnSave', true));
+    mode !== 'off' && (options.forceAi === true || readSetting('vulnLens', 'ai.analyzeOnSave', true));
 
   if (!wantAi) {
     if (options.announce) {
@@ -304,8 +305,8 @@ async function scanDocument(
     return;
   }
 
-  const maxChunks = config().get<number>('ai.maxChunks', 40);
-  const deep = options.deep ?? config().get<boolean>('ai.deepScan', false);
+  const maxChunks = readSetting('vulnLens', 'ai.maxChunks', 40);
+  const deep = options.deep ?? readSetting('vulnLens', 'ai.deepScan', false);
   const local = localModelConfig();
 
   let triage: ReadonlyMap<number, number> | undefined;
@@ -349,8 +350,8 @@ async function scanDocument(
 
   let failures = 0;
   const results = await analyzeCandidates(candidates, provider, {
-    concurrency: config().get<number>('ai.concurrency', 2),
-    timeoutMs: config().get<number>('ai.timeoutMs', 25_000),
+    concurrency: readSetting('vulnLens', 'ai.concurrency', 2),
+    timeoutMs: readSetting('vulnLens', 'ai.timeoutMs', 25_000),
     signal: state.abort?.signal,
     cache: verdictCache,
     onProgress: (done, total) => {
@@ -374,7 +375,7 @@ async function scanDocument(
       hits: hitList,
       chunks,
       analyses: results,
-      minConfidence: config().get<number>('ai.minConfidence', 0.6),
+      minConfidence: readSetting('vulnLens', 'ai.minConfidence', 0.6),
     }),
     state,
   );
@@ -686,7 +687,7 @@ async function suggestRewrite(): Promise<void> {
         token.onCancellationRequested(() => controller.abort());
         return analyzeCandidates([candidate], provider, {
           concurrency: 1,
-          timeoutMs: config().get<number>('ai.timeoutMs', 25_000),
+          timeoutMs: readSetting('vulnLens', 'ai.timeoutMs', 25_000),
           signal: controller.signal,
           cache: verdictCache,
         });

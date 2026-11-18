@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { readSetting } from '../settings';
 import { CopilotProvider } from './copilot';
 import { OllamaProvider } from './ollama';
 import { OpenAiCompatibleProvider } from './openai';
@@ -8,18 +9,14 @@ export const API_KEY_SECRET = 'vulnLens.byok.apiKey';
 
 export type AiMode = 'off' | 'ollama' | 'byok' | 'copilot';
 
-function config(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('vulnLens');
-}
-
 export function aiMode(): AiMode {
-  return config().get<AiMode>('ai.mode', 'off');
+  return readSetting<AiMode>('vulnLens', 'ai.mode', 'off');
 }
 
 export function ollamaProvider(): LlmProvider {
   return new OllamaProvider({
-    baseUrl: config().get<string>('ollama.baseUrl', 'http://127.0.0.1:11434'),
-    model: config().get<string>('ollama.model', 'qwen2.5-coder:7b'),
+    baseUrl: readSetting('vulnLens', 'ollama.baseUrl', 'http://127.0.0.1:11434'),
+    model: readSetting('vulnLens', 'ollama.model', 'qwen2.5-coder:7b'),
   });
 }
 
@@ -27,8 +24,8 @@ export async function byokProvider(secrets: vscode.SecretStorage): Promise<LlmPr
   const apiKey = await secrets.get(API_KEY_SECRET);
   if (!apiKey) return null;
   return new OpenAiCompatibleProvider({
-    baseUrl: config().get<string>('byok.baseUrl', 'https://api.openai.com/v1'),
-    model: config().get<string>('byok.model', 'gpt-4o-mini'),
+    baseUrl: readSetting('vulnLens', 'byok.baseUrl', 'https://api.openai.com/v1'),
+    model: readSetting('vulnLens', 'byok.model', 'gpt-4o-mini'),
     apiKey,
   });
 }
@@ -86,7 +83,7 @@ export async function describeProvider(secrets: vscode.SecretStorage): Promise<P
     return {
       available: false,
       label: 'OpenAI-compatible',
-      model: config().get<string>('byok.model', 'gpt-4o-mini'),
+      model: readSetting('vulnLens', 'byok.model', 'gpt-4o-mini'),
       detail: 'No API key stored. Run "VulnLens: Set API Key (BYOK)".',
     };
   }

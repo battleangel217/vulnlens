@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.4
+
+Security and trust release.
+
+- **Workspace Trust.** `vulnLens.ai.*`, `vulnLens.ollama.*`,
+  `vulnLens.byok.*` and `vulnLens.localModel.*` are restricted in untrusted
+  workspaces and fall back to user scope. Previously a repository could set
+  `vulnLens.byok.baseUrl` and enable `vulnLens.ai.analyzeOnSave` to send the
+  file under review to an arbitrary endpoint without a prompt.
+- **CI.** GitHub Actions runs the typecheck, the test suite, and packages the
+  VSIX on every push and pull request.
+- Add `marketing/checkpoints/` snapshots and version anchors for the launch
+  posts. No product change.
+
 ## 0.2.3
 
 - Document the first-run provider picker on the Marketplace page: what it

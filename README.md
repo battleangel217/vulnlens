@@ -221,6 +221,17 @@ The local triage model is **offline**. It runs in worker threads inside the
 extension host, reads only the configured artifact directory, and makes no
 network requests.
 
+### Workspace Trust
+
+A repository's `.vscode/settings.json` can override most settings, so
+`vulnLens.ai.*`, `vulnLens.ollama.*`, `vulnLens.byok.*` and
+`vulnLens.localModel.*` are restricted in untrusted workspaces. In Restricted
+Mode those keys fall back to user scope, which means a cloned repository cannot
+point `vulnLens.byok.baseUrl` at its own endpoint and enable
+`vulnLens.ai.analyzeOnSave` to send the code you are reviewing there. The rule
+layer keeps working; AI and the local model stay off unless you configured them
+at user scope.
+
 ## Suppressing a finding
 
 ```python

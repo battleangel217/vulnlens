@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import { readSetting } from '../settings';
 import { ClassifierPool } from './pool';
 
 /**
@@ -21,14 +21,13 @@ export interface PoolOutcome {
 }
 
 export function localModelConfig(): LocalModelConfig {
-  const config = vscode.workspace.getConfiguration('vulnLens.localModel');
   return {
-    enabled: config.get<boolean>('enabled', false),
-    directory: config.get<string>('path', '').trim(),
-    threshold: config.get<number>('threshold', 0.5),
-    maxChunks: config.get<number>('maxChunks', 40),
-    workers: config.get<number>('workers', 2),
-    timeoutMs: config.get<number>('timeoutMs', 10_000),
+    enabled: readSetting('vulnLens.localModel', 'enabled', false),
+    directory: readSetting('vulnLens.localModel', 'path', '').trim(),
+    threshold: readSetting('vulnLens.localModel', 'threshold', 0.5),
+    maxChunks: readSetting('vulnLens.localModel', 'maxChunks', 40),
+    workers: readSetting('vulnLens.localModel', 'workers', 2),
+    timeoutMs: readSetting('vulnLens.localModel', 'timeoutMs', 10_000),
   };
 }
 

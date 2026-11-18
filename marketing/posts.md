@@ -14,6 +14,10 @@ find everything, and keep the numbers exactly as measured.
 
 ## Post 1 — the training story
 
+> **Anchor:** model numbers from `eval/MODEL_RESULTS.md` (2026-11-14); rules
+> 22 TP / 2 FP / 7 FN from `eval/RESULTS.md`. Update the numbers only if the
+> corpus or the model changes.
+
 ### LinkedIn
 
 I fine-tuned CodeBERT to find Python vulnerabilities.
@@ -86,9 +90,13 @@ Repo: https://github.com/battleangel217/vulnlens
 
 ## Post 2 — the launch
 
+> **Anchor:** VulnLens 0.2.4 · 6 rules · Python only · 22 TP / 2 FP / 7 FN.
+> At publish time update the version string in both openings and this line;
+> leave the body alone.
+
 ### LinkedIn
 
-VulnLens 0.2.0 is live on the VS Code Marketplace.
+VulnLens 0.2.4 is live on the VS Code Marketplace.
 
 It is a Python security reviewer that runs where you write code.
 
@@ -114,7 +122,7 @@ GitHub: https://github.com/battleangel217/vulnlens
 ### X / Twitter (thread)
 
 1/
-VulnLens 0.2.0 is live on the VS Code Marketplace.
+VulnLens 0.2.4 is live on the VS Code Marketplace.
 
 Python security review as you save: 6 CWE rules, offline, in milliseconds.
 
@@ -161,3 +169,12 @@ https://github.com/battleangel217/vulnlens
   `demo/orders_api.py`, or a GIF of the rewrite preview, does more than any
   paragraph.
 - **Do not edit the numbers.** They are the reason the post is credible.
+- **Check the anchor first.** If the product moved past the anchor line at the
+top of the post, update the version string and the anchor, then re-freeze a
+snapshot in `marketing/checkpoints/`.
+
+## Change log
+
+| Date | Snapshot | Change |
+|---|---|---|
+| 2026-11-18 | `checkpoints/posts-2026-11-18-v1.md` | Frozen copy before edits. Added anchors; launch post bumped 0.2.0 → 0.2.4 for the Workspace Trust release. |

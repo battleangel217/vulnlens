@@ -2,7 +2,7 @@
   "name": "vuln-lens",
   "displayName": "VulnLens",
   "description": "Security review for Python: deterministic CWE rules plus optional AI verification through your own API key, GitHub Copilot, or Ollama.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "publisher": "battleangel",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -16,6 +16,31 @@
   },
   "engines": {
     "vscode": "^1.90.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Rules run in restricted mode. AI verification and the local model only use user-scope settings, because a repository could otherwise redirect code to an arbitrary endpoint.",
+      "restrictedConfigurations": [
+        "vulnLens.ai.mode",
+        "vulnLens.ai.analyzeOnSave",
+        "vulnLens.ai.deepScan",
+        "vulnLens.ai.minConfidence",
+        "vulnLens.ai.concurrency",
+        "vulnLens.ai.timeoutMs",
+        "vulnLens.ai.maxChunks",
+        "vulnLens.ollama.baseUrl",
+        "vulnLens.ollama.model",
+        "vulnLens.byok.baseUrl",
+        "vulnLens.byok.model",
+        "vulnLens.localModel.enabled",
+        "vulnLens.localModel.path",
+        "vulnLens.localModel.threshold",
+        "vulnLens.localModel.maxChunks",
+        "vulnLens.localModel.workers",
+        "vulnLens.localModel.timeoutMs"
+      ]
+    }
   },
   "categories": [
     "Linters",
