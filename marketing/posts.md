@@ -181,7 +181,9 @@ https://github.com/battleangel217/vulnlens
 - **Order matters.** Training post first, launch 1–2 days later. The negative
   result is the interesting part; the launch is the payoff.
 - **LinkedIn:** put the link in the first comment instead of the body. External
-  links in the body reduce reach, and the comment keeps the post clean.
+  links in the body reduce reach, and the comment keeps the post clean. The
+  `Repo:`, `Marketplace:`, and `GitHub:` lines at the end of each LinkedIn
+  block are the comment text — cut them from the body when posting.
 - **X:** the thread format above is written for the 280-character limit. Post it
   as a thread, not one long post.
 - **Attach one image**, per the slot at the top of each post. The chart carries
