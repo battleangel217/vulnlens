@@ -14,6 +14,8 @@ find everything, and keep the numbers exactly as measured.
 
 ## Post 1 — the training story
 
+> **Published:** 2026-11-14, LinkedIn and X.
+>
 > **Anchor:** model numbers from `eval/MODEL_RESULTS.md` (2026-11-14); rules
 > 22 TP / 2 FP / 7 FN from `eval/RESULTS.md`. Update the numbers only if the
 > corpus or the model changes.
@@ -104,6 +106,10 @@ Repo: https://github.com/battleangel217/vulnlens
 > "VS Code with a Python file open; the Problems panel lists four VulnLens
 > findings for SQL injection, command injection, path traversal, and a hardcoded
 > credential." Do not substitute a mockup.
+>
+> Open it with `code demo/orders_api.py`, then `Ctrl+Shift+M` for the Problems
+> panel. The file produces exactly four findings, so anything else means a
+> stale window.
 
 ### LinkedIn
 
@@ -113,7 +119,7 @@ It is a Python security reviewer that runs where you write code.
 
 What it does:
 • Six deterministic CWE rules on every save — SQL injection, command injection, path traversal, insecure deserialization, hardcoded credentials, weak crypto. Offline, in milliseconds.
-• An optional AI layer that confirms or rejects each finding, explains the data flow, and writes the fix. Ollama locally, your own API key, or Copilot.
+• An optional AI layer that confirms or rejects each finding, explains the data flow, and writes the fix. Your own API key, Copilot, or Ollama locally.
 • "Suggest Secure Rewrite": put the cursor in a function and get a complete safer version, previewed side by side before anything changes.
 • A CLI with SARIF output, so the same rules run in GitHub Actions and appear in code scanning.
 
@@ -144,7 +150,7 @@ SQL injection, command injection, path traversal, insecure deserialization, hard
 No network. No account. Just diagnostics.
 
 3/
-Optional AI layer: Ollama locally, your own key, or Copilot.
+Optional AI layer: your own key, Copilot, or Ollama locally.
 
 It confirms or rejects each finding, explains the data flow, and writes the fix.
 
@@ -198,4 +204,4 @@ https://github.com/battleangel217/vulnlens
 | Date | Snapshot | Change |
 |---|---|---|
 | 2026-11-18 | `checkpoints/posts-2026-11-18-v1.md` | Frozen copy before edits. Added anchors; launch post bumped 0.2.0 → 0.3.0 for the Workspace Trust + CLI release. |
-| 2026-11-20 | `checkpoints/posts-2026-11-20-v2.md` | Added the CLI/SARIF bullet and tweet, image slots with alt text, and the 1200×627 LinkedIn chart. Dropped #AI for #CyberSecurity. |
+| 2026-11-20 | `checkpoints/posts-2026-11-20-v2.md` | Added the CLI/SARIF bullet and tweet, image slots with alt text, and the 1200×627 LinkedIn chart. Dropped #AI for #CyberSecurity. Post 1 marked published 2026-11-14. |
