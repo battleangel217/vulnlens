@@ -278,7 +278,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: battleangel217/vulnlens@v0.3.0
+      - uses: battleangel217/vulnlens@v0.3.2
         with:
           paths: .
           min-severity: medium

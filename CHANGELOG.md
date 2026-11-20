@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.2
+
+Icon fix. No functional change.
+
+- Render the icon with rounded transparent corners. 0.3.1 shipped the same
+  artwork with opaque black corners, which showed as a black square on light
+  backgrounds.
+
+## 0.3.1
+
+New icon. No functional change.
+
+- Replace the extension icon with the check-in-lens mark: 256×256, legible at
+  32 px.
+
 ## 0.3.0
 
 Headless CLI and code scanning.
