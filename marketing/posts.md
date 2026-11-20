@@ -97,7 +97,7 @@ Repo: https://github.com/battleangel217/vulnlens
 
 ## Post 2 — the launch
 
-> **Anchor:** VulnLens 0.3.0 · 6 rules · Python only · 22 TP / 2 FP / 7 FN.
+> **Anchor:** VulnLens 0.3.2 · 6 rules · Python only · 22 TP / 2 FP / 7 FN.
 > At publish time update the version string in both openings and this line;
 > leave the body alone.
 >
@@ -113,7 +113,7 @@ Repo: https://github.com/battleangel217/vulnlens
 
 ### LinkedIn
 
-VulnLens 0.3.0 is live on the VS Code Marketplace.
+VulnLens 0.3.2 is live on the VS Code Marketplace.
 
 It is a Python security reviewer that runs where you write code.
 
@@ -140,7 +140,7 @@ GitHub: https://github.com/battleangel217/vulnlens
 ### X / Twitter (thread)
 
 1/
-VulnLens 0.3.0 is live on the VS Code Marketplace.
+VulnLens 0.3.2 is live on the VS Code Marketplace.
 
 Python security review as you save: 6 CWE rules, offline, in milliseconds.
 
@@ -205,3 +205,4 @@ https://github.com/battleangel217/vulnlens
 |---|---|---|
 | 2026-11-18 | `checkpoints/posts-2026-11-18-v1.md` | Frozen copy before edits. Added anchors; launch post bumped 0.2.0 → 0.3.0 for the Workspace Trust + CLI release. |
 | 2026-11-20 | `checkpoints/posts-2026-11-20-v2.md` | Added the CLI/SARIF bullet and tweet, image slots with alt text, and the 1200×627 LinkedIn chart. Dropped #AI for #CyberSecurity. Post 1 marked published 2026-11-14. |
+| 2026-11-20 | `checkpoints/posts-2026-11-20-v3.md` | Bumped the launch to 0.3.2 after the icon corner fix. Copy otherwise unchanged. |
