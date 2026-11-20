@@ -17,6 +17,11 @@ find everything, and keep the numbers exactly as measured.
 > **Anchor:** model numbers from `eval/MODEL_RESULTS.md` (2026-11-14); rules
 > 22 TP / 2 FP / 7 FN from `eval/RESULTS.md`. Update the numbers only if the
 > corpus or the model changes.
+>
+> **Image:** `marketing/post1-score-strip-linkedin.png` (1200×627) on LinkedIn,
+> `marketing/post1-score-strip.png` (1600×900) on X. Alt text: "Strip plot of 50
+> Python files scored by a PrimeVul-trained CodeBERT model. Vulnerable and clean
+> files overlap in the same 0.005–0.015 band."
 
 ### LinkedIn
 
@@ -46,7 +51,7 @@ The lesson: measure transfer before you market a model. A classifier that looks 
 
 Repo: https://github.com/battleangel217/vulnlens
 
-#MachineLearning #AppSec #Python #CodeBERT #AI
+#MachineLearning #AppSec #Python #CodeBERT #CyberSecurity
 
 ### X / Twitter (thread)
 
@@ -93,6 +98,12 @@ Repo: https://github.com/battleangel217/vulnlens
 > **Anchor:** VulnLens 0.3.0 · 6 rules · Python only · 22 TP / 2 FP / 7 FN.
 > At publish time update the version string in both openings and this line;
 > leave the body alone.
+>
+> **Image:** a screenshot of `demo/orders_api.py` in Code - OSS with the Problems
+> panel showing the four findings. 16:9, no personal tabs or paths. Alt text:
+> "VS Code with a Python file open; the Problems panel lists four VulnLens
+> findings for SQL injection, command injection, path traversal, and a hardcoded
+> credential." Do not substitute a mockup.
 
 ### LinkedIn
 
@@ -104,6 +115,7 @@ What it does:
 • Six deterministic CWE rules on every save — SQL injection, command injection, path traversal, insecure deserialization, hardcoded credentials, weak crypto. Offline, in milliseconds.
 • An optional AI layer that confirms or rejects each finding, explains the data flow, and writes the fix. Ollama locally, your own API key, or Copilot.
 • "Suggest Secure Rewrite": put the cursor in a function and get a complete safer version, previewed side by side before anything changes.
+• A CLI with SARIF output, so the same rules run in GitHub Actions and appear in code scanning.
 
 What it does not do:
 • It is not a proof of safety. A finding means "look here".
@@ -144,13 +156,20 @@ Cursor in a function → complete safer version → side-by-side preview → app
 Refused if the code changed while it was generating.
 
 5/
+Also a CLI:
+
+vulnlens src/ --format sarif
+
+Same rules in GitHub Actions, findings in code scanning.
+
+6/
 Rules measured on 50 files:
 22 TP / 2 FP / 7 FN
 91.7% precision, 75.9% recall
 
 AI is opt-in. No surprise calls.
 
-6/
+7/
 Free + MIT
 https://marketplace.visualstudio.com/items?itemName=battleangel.vuln-lens
 https://github.com/battleangel217/vulnlens
@@ -165,16 +184,16 @@ https://github.com/battleangel217/vulnlens
   links in the body reduce reach, and the comment keeps the post clean.
 - **X:** the thread format above is written for the 280-character limit. Post it
   as a thread, not one long post.
-- **Attach one image.** A screenshot of the four diagnostics in
-  `demo/orders_api.py`, or a GIF of the rewrite preview, does more than any
-  paragraph.
+- **Attach one image**, per the slot at the top of each post. The chart carries
+  post 1; the Problems-panel screenshot carries post 2. Do not use a mockup.
 - **Do not edit the numbers.** They are the reason the post is credible.
 - **Check the anchor first.** If the product moved past the anchor line at the
-top of the post, update the version string and the anchor, then re-freeze a
-snapshot in `marketing/checkpoints/`.
+  top of the post, update the version string and the anchor, then re-freeze a
+  snapshot in `marketing/checkpoints/`.
 
 ## Change log
 
 | Date | Snapshot | Change |
 |---|---|---|
 | 2026-11-18 | `checkpoints/posts-2026-11-18-v1.md` | Frozen copy before edits. Added anchors; launch post bumped 0.2.0 → 0.3.0 for the Workspace Trust + CLI release. |
+| 2026-11-20 | `checkpoints/posts-2026-11-20-v2.md` | Added the CLI/SARIF bullet and tweet, image slots with alt text, and the 1200×627 LinkedIn chart. Dropped #AI for #CyberSecurity. |
